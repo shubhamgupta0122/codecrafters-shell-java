@@ -9,9 +9,23 @@ public class REPL {
 	}
 
 	public void loop() {
+		String input = read();
+		String output = eval(input);
+		print(output);
+		loop();
+	}
+
+	private String read() {
 		showPrompt();
-		String command = readPrompt();
-		processCommand(command);
+		return readPrompt();
+	}
+
+	private String eval(String input) {
+		return commandNotFound(input);
+	}
+
+	private void print(String output) {
+		System.out.println(output);
 	}
 
 	private void showPrompt() {
@@ -23,12 +37,8 @@ public class REPL {
 		return scanner.nextLine();
 	}
 
-	private void processCommand(String command) {
-		commandNotFound(command);
-	}
-
-	private void commandNotFound(String badCommand) {
-		System.out.print(badCommand + ": " + COMMAND_NOT_FOUND);
+	private String commandNotFound(String badCommand) {
+		return badCommand + ": " + COMMAND_NOT_FOUND;
 	}
 
 }
