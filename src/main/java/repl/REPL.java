@@ -1,27 +1,30 @@
 package repl;
 
+import repl.exceptions.GracefulExitException;
+import repl.exceptions.ReplException;
+
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class REPL {
-	private static final String COMMAND_NOT_FOUND = "command not found";
 
 	public REPL() {
 	}
 
 	public void loop() {
-		String input = read();
-		String output = eval(input);
-		print(output);
-		loop();
+		try {
+			String input = read();
+			ReplEvaluator evaluator = new ReplEvaluator(input);
+			String output = evaluator.eval();
+			print(output);
+			loop();
+		} catch (GracefulExitException _) {
+		}
 	}
 
 	private String read() {
 		showPrompt();
 		return readPrompt();
-	}
-
-	private String eval(String input) {
-		return commandNotFound(input);
 	}
 
 	private void print(String output) {
@@ -35,10 +38,6 @@ public class REPL {
 	private String readPrompt() {
 		Scanner scanner = new Scanner(System.in);
 		return scanner.nextLine();
-	}
-
-	private String commandNotFound(String badCommand) {
-		return badCommand + ": " + COMMAND_NOT_FOUND;
 	}
 
 }
