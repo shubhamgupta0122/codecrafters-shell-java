@@ -5,10 +5,30 @@ import repl.commands.builtin.*;
 
 import java.util.Map;
 
+/**
+ * Registry of all builtin shell commands.
+ *
+ * <p>Maps command names to their implementing classes. Used by ReplEvaluator
+ * to determine if a command is builtin and to instantiate the appropriate
+ * command class via reflection.
+ *
+ * @see ReplEvaluator
+ */
 public class BuiltinCommand {
+	/** Command name for the exit builtin. */
 	public static final String exit = "exit";
+
+	/** Command name for the echo builtin. */
 	public static final String echo = "echo";
+
+	/** Command name for the type builtin. */
 	public static final String type = "type";
+
+	/**
+	 * Map of command names to their implementing classes.
+	 *
+	 * <p>Used to look up and instantiate builtin commands dynamically.
+	 */
 	public static final Map<String, Class<? extends Command>> allCommandMap = Map.of(
 			exit, ExitCommand.class,
 			echo, EchoCommand.class,
