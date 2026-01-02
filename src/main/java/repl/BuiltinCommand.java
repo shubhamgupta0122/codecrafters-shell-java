@@ -4,11 +4,11 @@ import repl.commands.*;
 
 import java.util.Map;
 
-public class SupportedCommand {
+public class BuiltinCommand {
 	public static final String exit = "exit";
 	public static final String echo = "echo";
 	public static final String type = "type";
-	public static final Map<String, Class<? extends Command>> commandMap = Map.of(
+	public static final Map<String, Class<? extends Command>> allCommandMap = Map.of(
 			exit, ExitCommand.class,
 			echo, EchoCommand.class,
 			type, TypeCommand.class

@@ -30,7 +30,7 @@ public class ReplEvaluator {
 	}
 
 	private String processCommand() throws ReplException {
-		Class<? extends Command> commandClass = SupportedCommand.commandMap.get(mainCommandStr);
+		Class<? extends Command> commandClass = BuiltinCommand.allCommandMap.get(mainCommandStr);
 		Command command;
 		if(commandClass != null) {
 			try {

@@ -1,7 +1,7 @@
 package repl.commands;
 
-import repl.SupportedCommand;
 import repl.exceptions.ReplException;
+import repl.BuiltinCommand;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ public class TypeCommand implements Command {
 	@Override
 	public String process(String originalInput, String mainCommandStr, List<String> args) {
 		String commandToTest = args.getFirst();
-		if(SupportedCommand.commandMap.containsKey(commandToTest))
+		if(BuiltinCommand.allCommandMap.containsKey(commandToTest)) {
 			return commandToTest + COMMAND_FOUND;
 		else
 			return commandToTest + COMMAND_NOT_FOUND;
