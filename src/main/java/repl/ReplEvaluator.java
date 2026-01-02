@@ -15,7 +15,7 @@ import static repl.Constants.WHITESPACE;
 public class ReplEvaluator {
 
 	private final String originalInput;
-	private String mainCommand;
+	private String mainCommandStr;
 	private List<String> commandArgs;
 
 	public ReplEvaluator (String input) {
@@ -24,7 +24,7 @@ public class ReplEvaluator {
 
 	public String eval() throws ReplException {
 		extractMainCommand();
-		if(mainCommand != null) {
+		if(mainCommandStr != null) {
 			return processCommand();
 		}
 		throw new RuntimeException("Null Input???");
@@ -32,18 +32,18 @@ public class ReplEvaluator {
 
 	private String processCommand() throws ReplException {
 		Command command;
-		switch (mainCommand) {
+		switch (mainCommandStr) {
 			case SupportedCommand.exit -> command = new ExitCommand();
 			case SupportedCommand.echo -> command = new EchoCommand();
 			default -> command = new BadCommand();
 		}
-		return command.process(originalInput, mainCommand, commandArgs);
+		return command.process(originalInput, mainCommandStr, commandArgs);
 	}
 
 	private void extractMainCommand() {
 		List<String> splitCommand = Arrays.stream(originalInput.split(WHITESPACE)).toList();
-		mainCommand = splitCommand.getFirst();
-		if(mainCommand == null) {
+		mainCommandStr = splitCommand.getFirst();
+		if(mainCommandStr == null) {
 			commandArgs = new ArrayList<>();
 		} else {
 			commandArgs = splitCommand.subList(1, splitCommand.size());
