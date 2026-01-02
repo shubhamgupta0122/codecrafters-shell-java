@@ -3,7 +3,6 @@ package repl;
 import repl.exceptions.GracefulExitException;
 import repl.exceptions.ReplException;
 
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class REPL {
@@ -11,6 +10,7 @@ public class REPL {
 	public REPL() {
 	}
 
+	@SuppressWarnings("InfiniteRecursion")
 	public void loop() {
 		try {
 			String input = read();

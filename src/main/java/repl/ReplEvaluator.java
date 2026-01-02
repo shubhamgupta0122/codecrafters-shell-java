@@ -2,10 +2,9 @@ package repl;
 
 import repl.commands.BadCommand;
 import repl.commands.Command;
-import repl.commands.EchoCommand;
-import repl.commands.ExitCommand;
 import repl.exceptions.ReplException;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,11 +30,21 @@ public class ReplEvaluator {
 	}
 
 	private String processCommand() throws ReplException {
+		Class<? extends Command> commandClass = SupportedCommand.commandMap.get(mainCommandStr);
 		Command command;
-		switch (mainCommandStr) {
-			case SupportedCommand.exit -> command = new ExitCommand();
-			case SupportedCommand.echo -> command = new EchoCommand();
-			default -> command = new BadCommand();
+		if(commandClass != null) {
+			try {
+				command = commandClass.getDeclaredConstructor().newInstance();
+			} catch (
+					InstantiationException |
+					IllegalAccessException |
+					InvocationTargetException |
+					NoSuchMethodException e
+			) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			command = new BadCommand();
 		}
 		return command.process(originalInput, mainCommandStr, commandArgs);
 	}
