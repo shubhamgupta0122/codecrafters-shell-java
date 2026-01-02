@@ -1,32 +1,58 @@
 package repl.commands;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Command handler for external executable programs.
  *
- * <p>Wraps external programs found in PATH. Currently outputs debug information
- * about the command and arguments; actual process execution is not yet implemented.
+ * <p>Executes external programs found in PATH using Java's ProcessBuilder API.
+ * Captures and returns stdout/stderr output from the spawned process.
  */
 public class ExecutableCommand implements Command {
 	/**
-	 * Executes the external command.
+	 * Executes the external command and captures its output.
 	 *
-	 * <p>Currently a stub implementation that outputs debug information about
-	 * the command and its arguments. TODO: Implement actual process spawning.
+	 * <p>Spawns a new process using ProcessBuilder, waits for completion, and
+	 * returns the captured output. Both stdout and stderr are merged together.
 	 *
 	 * @param originalInput the complete original input string
 	 * @param mainCommandStr the executable name/path
 	 * @param args the command arguments
-	 * @return debug output showing arguments passed
+	 * @return the captured output from the process, or error message on failure
 	 */
 	@Override
 	public String execute(String originalInput, String mainCommandStr, List<String> args) {
-		StringBuilder sb = new StringBuilder();
-		appendArgs(mainCommandStr, args, sb);
-		// @TODO: execute actual command and append it's output
-		return sb.toString();
+		try {
+			// Build command list
+			List<String> command = new ArrayList<>();
+			command.add(mainCommandStr);
+			command.addAll(args);
+
+			// Create and configure process
+			ProcessBuilder pb = new ProcessBuilder(command);
+			pb.redirectErrorStream(true); // Merge stderr into stdout
+
+			// Start process and capture output
+			Process process = pb.start();
+			String output = new String(process.getInputStream().readAllBytes());
+
+			// Wait for completion
+			int exitCode = process.waitFor();
+
+			// Strip trailing whitespace (REPL adds newline)
+			return output.stripTrailing();
+
+		} catch (IOException | InterruptedException e) {
+			return mainCommandStr + ": execution failed: " + e.getMessage();
+		}
+
+		// Debug output (commented out - uncomment to see argument details)
+		// StringBuilder sb = new StringBuilder();
+		// appendArgs(mainCommandStr, args, sb);
+		// return sb.toString();
 	}
 
 	/**
