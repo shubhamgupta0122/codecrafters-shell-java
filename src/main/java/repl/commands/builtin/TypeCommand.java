@@ -13,7 +13,7 @@ public class TypeCommand implements Command {
 	private static final String COMMAND_NOT_FOUND = ": not found";
 
 	@Override
-	public String process(String originalInput, String mainCommandStr, List<String> args) {
+	public String execute(String originalInput, String mainCommandStr, List<String> args) {
 		String commandToTest = args.getFirst();
 		if(BuiltinCommand.allCommandMap.containsKey(commandToTest)) {
 			return commandToTest + COMMAND_FOUND;

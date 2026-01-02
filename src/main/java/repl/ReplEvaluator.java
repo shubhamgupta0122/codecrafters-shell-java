@@ -53,7 +53,7 @@ public class ReplEvaluator {
 			else
 				command = new BadCommand();
 		}
-		return command.process(originalInput, mainCommandStr, commandArgs);
+		return command.execute(originalInput, mainCommandStr, commandArgs);
 	}
 
 	private void extractMainCommand() {

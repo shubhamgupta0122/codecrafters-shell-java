@@ -7,7 +7,7 @@ import java.util.List;
 import static repl.Constants.WHITESPACE;
 
 public class EchoCommand implements Command {
-	public String process(String originalInput, String mainCommandStr, List<String> args) {
+	public String execute(String originalInput, String mainCommandStr, List<String> args) {
 		StringBuilder outputSB = new StringBuilder();
 		args.forEach(i -> {
 			outputSB.append(i);

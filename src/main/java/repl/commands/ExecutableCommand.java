@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExecutableCommand implements Command {
 	@Override
-	public String process(String originalInput, String mainCommandStr, List<String> args) {
+	public String execute(String originalInput, String mainCommandStr, List<String> args) {
 		StringBuilder sb = new StringBuilder();
 		appendArgs(mainCommandStr, args, sb);
 		return sb.toString();

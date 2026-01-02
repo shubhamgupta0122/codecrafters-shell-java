@@ -6,7 +6,7 @@ import repl.exceptions.GracefulExitException;
 import java.util.List;
 
 public class ExitCommand implements Command {
-	public String process(
+	public String execute(
 			String originalInput,
 			String mainCommandStr,
 			List<String> args
