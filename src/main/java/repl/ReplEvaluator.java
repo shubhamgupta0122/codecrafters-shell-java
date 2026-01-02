@@ -2,9 +2,12 @@ package repl;
 
 import repl.commands.Command;
 import repl.commands.BadCommand;
+import repl.commands.ExecutableCommand;
 import repl.exceptions.ReplException;
+import repl.utils.ExecutableUtils;
 
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +47,11 @@ public class ReplEvaluator {
 				throw new RuntimeException(e);
 			}
 		} else {
-			command = new BadCommand();
+			Path executablePath = ExecutableUtils.findExecutablePath(mainCommandStr);
+			if(executablePath != null)
+				command = new ExecutableCommand();
+			else
+				command = new BadCommand();
 		}
 		return command.process(originalInput, mainCommandStr, commandArgs);
 	}
