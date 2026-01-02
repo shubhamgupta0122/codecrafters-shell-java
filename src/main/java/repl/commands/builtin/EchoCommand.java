@@ -1,6 +1,6 @@
-package repl.commands;
+package repl.commands.builtin;
 
-import repl.exceptions.ReplException;
+import repl.commands.Command;
 
 import java.util.List;
 

@@ -1,14 +1,11 @@
-package repl.commands;
+package repl.commands.builtin;
 
 import repl.BuiltinCommand;
+import repl.commands.Command;
 import repl.utils.ExecutableUtils;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class TypeCommand implements Command {
 

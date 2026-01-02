@@ -1,7 +1,7 @@
 package repl;
 
-import repl.commands.BadCommand;
 import repl.commands.Command;
+import repl.commands.BadCommand;
 import repl.exceptions.ReplException;
 
 import java.lang.reflect.InvocationTargetException;

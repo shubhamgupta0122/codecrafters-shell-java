@@ -1,5 +1,6 @@
-package repl.commands;
+package repl.commands.builtin;
 
+import repl.commands.Command;
 import repl.exceptions.GracefulExitException;
 
 import java.util.List;

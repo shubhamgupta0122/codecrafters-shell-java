@@ -1,6 +1,7 @@
 package repl;
 
 import repl.commands.*;
+import repl.commands.builtin.*;
 
 import java.util.Map;
 
