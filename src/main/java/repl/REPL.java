@@ -19,6 +19,8 @@ public class REPL {
 			print(output);
 			loop();
 		} catch (GracefulExitException _) {
+		} catch (ReplException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

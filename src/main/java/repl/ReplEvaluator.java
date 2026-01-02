@@ -1,15 +1,18 @@
 package repl;
 
-import repl.exceptions.GracefulExitException;
+import repl.commands.BadCommand;
+import repl.commands.Command;
+import repl.commands.EchoCommand;
+import repl.commands.ExitCommand;
 import repl.exceptions.ReplException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static repl.Constants.WHITESPACE;
+
 public class ReplEvaluator {
-	private static final String WHITESPACE = " ";
-	private static final String COMMAND_NOT_FOUND = "command not found";
 
 	private final String originalInput;
 	private String mainCommand;
@@ -19,21 +22,22 @@ public class ReplEvaluator {
 		originalInput = input;
 	}
 
-	public String eval() {
+	public String eval() throws ReplException {
 		extractMainCommand();
 		if(mainCommand != null) {
 			return processCommand();
 		}
-		throw new ReplException("Null Input???");
+		throw new RuntimeException("Null Input???");
 	}
 
-	private String processCommand() {
-		String output;
+	private String processCommand() throws ReplException {
+		Command command;
 		switch (mainCommand) {
-			case SupportedCommand.exit -> throw new GracefulExitException();
-			default -> output = commandNotFound(originalInput);
+			case SupportedCommand.exit -> command = new ExitCommand();
+			case SupportedCommand.echo -> command = new EchoCommand();
+			default -> command = new BadCommand();
 		}
-		return output;
+		return command.process(originalInput, mainCommand, commandArgs);
 	}
 
 	private void extractMainCommand() {
@@ -44,9 +48,5 @@ public class ReplEvaluator {
 		} else {
 			commandArgs = splitCommand.subList(1, splitCommand.size());
 		}
-	}
-
-	private String commandNotFound(String badCommand) {
-		return badCommand + ": " + COMMAND_NOT_FOUND;
 	}
 }
