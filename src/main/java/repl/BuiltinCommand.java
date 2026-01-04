@@ -24,6 +24,9 @@ public class BuiltinCommand {
 	/** Command name for the type builtin. */
 	public static final String type = "type";
 
+	/** Command name for the pwd builtin. */
+	public static final String pwd = "pwd";
+
 	/**
 	 * Map of command names to their implementing classes.
 	 *
@@ -32,6 +35,7 @@ public class BuiltinCommand {
 	public static final Map<String, Class<? extends Command>> allCommandMap = Map.of(
 			exit, ExitCommand.class,
 			echo, EchoCommand.class,
-			type, TypeCommand.class
+			type, TypeCommand.class,
+			pwd, PwdCommand.class
 	);
 }
