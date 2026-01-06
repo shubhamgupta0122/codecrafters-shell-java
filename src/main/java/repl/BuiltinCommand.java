@@ -27,6 +27,9 @@ public class BuiltinCommand {
 	/** Command name for the pwd builtin. */
 	public static final String pwd = "pwd";
 
+	/** Command name for the cd builtin. */
+	public static final String cd = "cd";
+
 	/**
 	 * Map of command names to their implementing classes.
 	 *
@@ -36,6 +39,7 @@ public class BuiltinCommand {
 			exit, ExitCommand.class,
 			echo, EchoCommand.class,
 			type, TypeCommand.class,
-			pwd, PwdCommand.class
+			pwd, PwdCommand.class,
+			cd, ChangeDirCommand.class
 	);
 }

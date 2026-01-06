@@ -69,7 +69,8 @@ public class REPL {
 	 * @param output the output string to print
 	 */
 	private void print(String output) {
-		System.out.println(output);
+		if(output != null)
+			System.out.println(output);
 	}
 
 	/**
