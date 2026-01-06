@@ -15,7 +15,7 @@ public class ChangeDirCommand implements Command {
 
 	@Override
 	public String execute(String originalInput, String mainCommandStr, List<String> args) {
-		String requestedPath = args.getFirst();
+		String requestedPath = args.isEmpty() ? DirUtils.HomeDirTilde : args.getFirst();
 		try {
 			DirUtils.setCurrentDir(requestedPath);
 			return null;
