@@ -1,27 +1,18 @@
 package repl.utils;
 
-import repl.exceptions.NoSuchFileOrDirectoryException;
-
-import java.nio.file.Files;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class DirUtils {
-	private static final String initialDir = System.getProperty("user.dir");
-	private static String currentDir = initialDir;
+	private static final Path initialDir = Paths.get(System.getProperty("user.dir"));
+	private static Path currentDir = initialDir;
 
 	public static Path getCurrentDir() {
-		return Paths.get(currentDir);
+		return currentDir;
 	}
 
-	public static void setCurrentDir(String newCurrentDir) throws NoSuchFileOrDirectoryException {
-		if(!dirExists(newCurrentDir))
-			throw new NoSuchFileOrDirectoryException(newCurrentDir);
-
-		currentDir = newCurrentDir;
-	}
-
-	private static boolean dirExists(String pathStr) {
-		return Files.exists(Paths.get(pathStr));
+	public static void setCurrentDir(String pathStr) throws IOException {
+		currentDir = currentDir.resolve(pathStr).toRealPath();
 	}
 }

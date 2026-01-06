@@ -3,7 +3,6 @@ package repl.commands;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Command handler for external executable programs.
@@ -40,7 +39,7 @@ public class ExecutableCommand implements Command {
 			String output = new String(process.getInputStream().readAllBytes());
 
 			// Wait for completion
-			int exitCode = process.waitFor();
+			process.waitFor();
 
 			// Strip trailing whitespace (REPL adds newline)
 			return output.stripTrailing();
@@ -48,44 +47,6 @@ public class ExecutableCommand implements Command {
 		} catch (IOException | InterruptedException e) {
 			return mainCommandStr + ": execution failed: " + e.getMessage();
 		}
-
-		// Debug output (commented out - uncomment to see argument details)
-		// StringBuilder sb = new StringBuilder();
-		// appendArgs(mainCommandStr, args, sb);
-		// return sb.toString();
-	}
-
-	/**
-	 * Appends formatted argument list to the output.
-	 *
-	 * @param mainCommandStr the program name
-	 * @param args the arguments
-	 * @param sb the StringBuilder to append to
-	 */
-	private static void appendArgs(String mainCommandStr, List<String> args, StringBuilder sb) {
-		appendArgCounts(args, sb);
-		sb.append("Arg #0 (program name): ");
-		sb.append(mainCommandStr);
-		sb.append("\n");
-		AtomicInteger count = new AtomicInteger(1);
-		args.forEach(arg -> {
-			sb.append("Arg #");
-			sb.append(count.getAndIncrement());
-			sb.append(": ");
-			sb.append(arg);
-		});
-	}
-
-	/**
-	 * Appends argument count summary to the output.
-	 *
-	 * @param args the arguments (excluding program name)
-	 * @param sb the StringBuilder to append to
-	 */
-	private static void appendArgCounts(List<String> args, StringBuilder sb) {
-		sb.append("Program was passed ");
-		sb.append(args.size() + 1);
-		sb.append(" args (including program name).\n");
 	}
 
 }

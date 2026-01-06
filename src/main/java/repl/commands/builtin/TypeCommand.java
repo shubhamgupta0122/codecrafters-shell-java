@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Builtin command that identifies the type of a command.
+ * Builtin command that identifies the type of command.
  *
  * <p>Implements the {@code type} command, which determines if a command is a
  * builtin, an executable in PATH, or not found.
