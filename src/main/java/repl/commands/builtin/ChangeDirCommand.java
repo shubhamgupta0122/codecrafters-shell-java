@@ -9,10 +9,27 @@ import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.List;
 
-
+/**
+ * Builtin command that changes the current working directory.
+ *
+ * <p>Implements the {@code cd} command. Supports absolute paths, relative paths,
+ * and home directory expansion using {@code ~}.
+ */
 public class ChangeDirCommand implements Command {
+	/** Error message suffix for non-existent paths. */
 	private static final String NoSuchFileOrDirectory = ": No such file or directory";
 
+	/**
+	 * Changes the current working directory.
+	 *
+	 * <p>If no argument is provided, changes to the home directory. Supports
+	 * tilde expansion for home directory paths.
+	 *
+	 * @param originalInput the complete original input string
+	 * @param mainCommandStr the command name ("cd")
+	 * @param args the target directory path (optional, defaults to home)
+	 * @return null on success, or error message if path doesn't exist
+	 */
 	@Override
 	public String execute(String originalInput, String mainCommandStr, List<String> args) {
 		String requestedPath = args.isEmpty() ? DirUtils.HomeDirTilde : args.getFirst();

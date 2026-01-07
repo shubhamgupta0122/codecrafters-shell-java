@@ -7,7 +7,8 @@
  * <p>Available builtins: {@link repl.commands.builtin.EchoCommand} (echo),
  * {@link repl.commands.builtin.ExitCommand} (exit),
  * {@link repl.commands.builtin.TypeCommand} (type),
- * {@link repl.commands.builtin.PwdCommand} (pwd).
+ * {@link repl.commands.builtin.PwdCommand} (pwd),
+ * {@link repl.commands.builtin.ChangeDirCommand} (cd).
  *
  * <p>Registered in {@link repl.BuiltinCommand} and instantiated via reflection by {@link repl.ReplEvaluator}.
  *
