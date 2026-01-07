@@ -18,7 +18,8 @@
       "Bash(jq:*)",
       "Bash(xargs:*)",
       "Read(//Users/shubhamgupta/.claude/**)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(mvn test:*)"
     ]
   }
 }
