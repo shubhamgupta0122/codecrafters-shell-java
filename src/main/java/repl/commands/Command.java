@@ -1,8 +1,7 @@
 package repl.commands;
 
+import repl.ReplContext;
 import repl.exceptions.ReplException;
-
-import java.util.List;
 
 /**
  * Core interface for all executable shell commands.
@@ -18,16 +17,14 @@ import java.util.List;
  */
 public interface Command {
 	/**
-	 * Executes this command with the given input and arguments.
+	 * Executes this command with the given context.
 	 *
 	 * <p>Returns output as a string; REPL handles printing. Throw {@link ReplException} for errors
 	 * or {@link repl.exceptions.GracefulExitException} to exit shell.
 	 *
-	 * @param originalInput the complete original input string from the user
-	 * @param mainCommandStr the main command name extracted from the input
-	 * @param args the list of arguments passed to the command (maybe empty)
-	 * @return the output string to be printed, or empty string if no output
+	 * @param context the REPL context containing command input, arguments, and shared services
+	 * @return the output string to be printed, or null/empty if no output
 	 * @throws ReplException if command execution fails or encounters an error
 	 */
-	String execute(String originalInput, String mainCommandStr, List<String> args) throws ReplException;
+	String execute(ReplContext context) throws ReplException;
 }

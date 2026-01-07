@@ -5,30 +5,53 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Utility class for managing the shell's current working directory.
+ * Manages the shell's current working directory.
  *
  * <p>Provides methods to get and set the current directory, with support
  * for both absolute and relative paths, as well as home directory expansion.
+ *
+ * <p>Instance-based design allows for proper test isolation.
  */
 public class DirUtils {
-	/** The directory where the shell was started. */
-	private static final Path initialDir = Paths.get(System.getProperty("user.dir"));
-
-	/** The current working directory of the shell. */
-	private static Path currentDir = initialDir;
-
 	/** The tilde character used for home directory expansion. */
 	public static final String HomeDirTilde = "~";
 
 	/** The absolute path to the user's home directory. */
 	public static final String HomeDirPath = System.getenv("HOME");
 
+	/** The directory where the shell was started. */
+	private final Path initialDir;
+
+	/** The current working directory of the shell. */
+	private Path currentDir;
+
+	/**
+	 * Creates a new DirUtils instance with the current working directory
+	 * set to the JVM's user.dir property.
+	 */
+	public DirUtils() {
+		this.initialDir = Paths.get(System.getProperty("user.dir"));
+		this.currentDir = this.initialDir;
+	}
+
+	/**
+	 * Creates a new DirUtils instance with a custom initial directory.
+	 *
+	 * <p>Useful for testing with controlled directory state.
+	 *
+	 * @param initialDir the initial working directory
+	 */
+	public DirUtils(Path initialDir) {
+		this.initialDir = initialDir;
+		this.currentDir = initialDir;
+	}
+
 	/**
 	 * Returns the current working directory.
 	 *
 	 * @return the current directory as a Path
 	 */
-	public static Path getCurrentDir() {
+	public Path getCurrentDir() {
 		return currentDir;
 	}
 
@@ -42,7 +65,7 @@ public class DirUtils {
 	 * @param pathStr the path to change to (absolute, relative, or with ~)
 	 * @throws IOException if the path doesn't exist or cannot be accessed
 	 */
-	public static void setCurrentDir(String pathStr) throws IOException {
+	public void setCurrentDir(String pathStr) throws IOException {
 		if(pathStr.startsWith(HomeDirTilde))
 			setCurrentDir(pathStr.replace(HomeDirTilde, HomeDirPath));
 		else

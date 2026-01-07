@@ -1,5 +1,7 @@
 package repl.commands;
 
+import repl.ReplContext;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,18 +19,17 @@ public class ExecutableCommand implements Command {
 	 * <p>Spawns a new process using ProcessBuilder, waits for completion, and
 	 * returns the captured output. Both stdout and stderr are merged together.
 	 *
-	 * @param originalInput the complete original input string
-	 * @param mainCommandStr the executable name/path
-	 * @param args the command arguments
+	 * @param context the REPL context containing command and arguments
 	 * @return the captured output from the process, or error message on failure
 	 */
 	@Override
-	public String execute(String originalInput, String mainCommandStr, List<String> args) {
+	public String execute(ReplContext context) {
+		String mainCommandStr = context.getMainCommandStr();
 		try {
 			// Build command list
 			List<String> command = new ArrayList<>();
 			command.add(mainCommandStr);
-			command.addAll(args);
+			command.addAll(context.getArgs());
 
 			// Create and configure process
 			ProcessBuilder pb = new ProcessBuilder(command);

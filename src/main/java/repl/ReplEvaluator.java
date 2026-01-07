@@ -27,6 +27,9 @@ import static repl.Constants.WHITESPACE;
  */
 public class ReplEvaluator {
 
+	/** The context builder with shared services (reused across commands). */
+	private final ReplContext.Builder contextBuilder;
+
 	/** The original input string from the user. */
 	private final String originalInput;
 
@@ -40,9 +43,11 @@ public class ReplEvaluator {
 	 * Creates a new evaluator for the given input.
 	 *
 	 * @param input the user input string to evaluate
+	 * @param contextBuilder the context builder with shared services
 	 */
-	public ReplEvaluator (String input) {
-		originalInput = input;
+	public ReplEvaluator(String input, ReplContext.Builder contextBuilder) {
+		this.originalInput = input;
+		this.contextBuilder = contextBuilder;
 	}
 
 	/**
@@ -93,7 +98,15 @@ public class ReplEvaluator {
 			else
 				command = new BadCommand();
 		}
-		return command.execute(originalInput, mainCommandStr, commandArgs);
+
+		// Build context with per-request data
+		ReplContext context = contextBuilder
+				.originalInput(originalInput)
+				.mainCommandStr(mainCommandStr)
+				.args(commandArgs)
+				.build();
+
+		return command.execute(context);
 	}
 
 	/**

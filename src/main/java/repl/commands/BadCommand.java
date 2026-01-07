@@ -1,8 +1,7 @@
 package repl.commands;
 
+import repl.ReplContext;
 import repl.exceptions.ReplException;
-
-import java.util.List;
 
 /**
  * Command handler for invalid or unrecognized commands.
@@ -17,14 +16,12 @@ public class BadCommand implements Command {
 	/**
 	 * Executes the bad command handler, returning an error message.
 	 *
-	 * @param originalInput the complete original input string
-	 * @param mainCommandStr the unrecognized command name
-	 * @param args the command arguments (ignored)
+	 * @param context the REPL context
 	 * @return error message indicating command was not found
 	 * @throws ReplException never thrown by this implementation
 	 */
 	@Override
-	public String execute(String originalInput, String mainCommandStr, List<String> args) throws ReplException {
-		return mainCommandStr + ": " + COMMAND_NOT_FOUND;
+	public String execute(ReplContext context) throws ReplException {
+		return context.getMainCommandStr() + ": " + COMMAND_NOT_FOUND;
 	}
 }

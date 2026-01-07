@@ -1,11 +1,11 @@
 package repl.commands.builtin;
 
 import repl.BuiltinCommand;
+import repl.ReplContext;
 import repl.commands.Command;
 import repl.utils.ExecutableUtils;
 
 import java.nio.file.Path;
-import java.util.List;
 
 /**
  * Builtin command that identifies the type of command.
@@ -27,14 +27,12 @@ public class TypeCommand implements Command {
 	 * <p>Checks if the specified command is a builtin or exists in PATH,
 	 * returning an appropriate message.
 	 *
-	 * @param originalInput the complete original input string
-	 * @param mainCommandStr the command name ("type")
-	 * @param args the command to check (first argument)
+	 * @param context the REPL context containing the command to check
 	 * @return description of the command type or "not found" message
 	 */
 	@Override
-	public String execute(String originalInput, String mainCommandStr, List<String> args) {
-		String commandToTest = args.getFirst();
+	public String execute(ReplContext context) {
+		String commandToTest = context.getArgs().getFirst();
 		if(BuiltinCommand.allCommandMap.containsKey(commandToTest)) {
 			return commandToTest + COMMAND_FOUND;
 		} else {

@@ -2,6 +2,7 @@ package repl;
 
 import repl.exceptions.GracefulExitException;
 import repl.exceptions.ReplException;
+import repl.utils.DirUtils;
 
 import java.util.Scanner;
 
@@ -21,10 +22,25 @@ import java.util.Scanner;
  */
 public class REPL {
 
+	/** The context builder with shared services (reused across commands). */
+	private final ReplContext.Builder contextBuilder;
+
 	/**
-	 * Creates a new REPL instance.
+	 * Creates a new REPL instance with default shared services.
 	 */
 	public REPL() {
+		this(new DirUtils());
+	}
+
+	/**
+	 * Creates a new REPL instance with the given DirUtils.
+	 *
+	 * <p>Useful for testing with custom directory state.
+	 *
+	 * @param dirUtils the directory utilities instance
+	 */
+	public REPL(DirUtils dirUtils) {
+		this.contextBuilder = ReplContext.builder(dirUtils);
 	}
 
 	/**
@@ -41,7 +57,7 @@ public class REPL {
 	public void loop() {
 		try {
 			String input = read();
-			ReplEvaluator evaluator = new ReplEvaluator(input);
+			ReplEvaluator evaluator = new ReplEvaluator(input, contextBuilder);
 			String output = evaluator.eval();
 			print(output);
 			loop();

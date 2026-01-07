@@ -1,8 +1,7 @@
 package repl.commands.builtin;
 
+import repl.ReplContext;
 import repl.commands.Command;
-
-import java.util.List;
 
 import static repl.Constants.WHITESPACE;
 
@@ -16,14 +15,12 @@ public class EchoCommand implements Command {
 	/**
 	 * Executes the echo command, printing all arguments.
 	 *
-	 * @param originalInput the complete original input string
-	 * @param mainCommandStr the command name ("echo")
-	 * @param args the arguments to print
+	 * @param context the REPL context containing arguments to print
 	 * @return the arguments joined by spaces
 	 */
-	public String execute(String originalInput, String mainCommandStr, List<String> args) {
+	public String execute(ReplContext context) {
 		StringBuilder outputSB = new StringBuilder();
-		args.forEach(i -> {
+		context.getArgs().forEach(i -> {
 			outputSB.append(i);
 			outputSB.append(WHITESPACE);
 		});

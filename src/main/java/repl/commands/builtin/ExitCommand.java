@@ -1,9 +1,8 @@
 package repl.commands.builtin;
 
+import repl.ReplContext;
 import repl.commands.Command;
 import repl.exceptions.GracefulExitException;
-
-import java.util.List;
 
 /**
  * Builtin command that exits the shell gracefully.
@@ -15,17 +14,11 @@ public class ExitCommand implements Command {
 	/**
 	 * Executes the exit command, terminating the shell.
 	 *
-	 * @param originalInput the complete original input string
-	 * @param mainCommandStr the command name ("exit")
-	 * @param args command arguments (ignored)
+	 * @param context the REPL context (unused)
 	 * @return never returns normally
 	 * @throws GracefulExitException always thrown to signal exit
 	 */
-	public String execute(
-			String originalInput,
-			String mainCommandStr,
-			List<String> args
-	) throws GracefulExitException {
+	public String execute(ReplContext context) throws GracefulExitException {
 		throw new GracefulExitException();
 	}
 }

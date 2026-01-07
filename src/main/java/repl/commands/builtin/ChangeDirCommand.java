@@ -1,6 +1,7 @@
 package repl.commands.builtin;
 
 import repl.BuiltinCommand;
+import repl.ReplContext;
 import repl.commands.Command;
 import repl.exceptions.ReplException;
 import repl.utils.DirUtils;
@@ -25,16 +26,15 @@ public class ChangeDirCommand implements Command {
 	 * <p>If no argument is provided, changes to the home directory. Supports
 	 * tilde expansion for home directory paths.
 	 *
-	 * @param originalInput the complete original input string
-	 * @param mainCommandStr the command name ("cd")
-	 * @param args the target directory path (optional, defaults to home)
+	 * @param context the REPL context containing target path and DirUtils
 	 * @return null on success, or error message if path doesn't exist
 	 */
 	@Override
-	public String execute(String originalInput, String mainCommandStr, List<String> args) {
+	public String execute(ReplContext context) {
+		List<String> args = context.getArgs();
 		String requestedPath = args.isEmpty() ? DirUtils.HomeDirTilde : args.getFirst();
 		try {
-			DirUtils.setCurrentDir(requestedPath);
+			context.getDirUtils().setCurrentDir(requestedPath);
 			return null;
 		} catch (NoSuchFileException e){
 			return BuiltinCommand.cd + ": " + e.getMessage() + NoSuchFileOrDirectory;
