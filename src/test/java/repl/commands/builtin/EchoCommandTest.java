@@ -1,5 +1,6 @@
 package repl.commands.builtin;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -20,7 +21,10 @@ class EchoCommandTest {
 
 	private final EchoCommand echoCommand = new EchoCommand();
 
+	// === Stage #IZ3: Implement echo ===
+
 	@Test
+	@Tag("IZ3")
 	void execute_singleArg_returnsArg() throws ReplException {
 		when(mockContext.getArgs()).thenReturn(List.of("hello"));
 
@@ -30,6 +34,7 @@ class EchoCommandTest {
 	}
 
 	@Test
+	@Tag("IZ3")
 	void execute_multipleArgs_returnsArgsJoinedBySpaces() throws ReplException {
 		when(mockContext.getArgs()).thenReturn(List.of("hello", "world"));
 
@@ -39,6 +44,7 @@ class EchoCommandTest {
 	}
 
 	@Test
+	@Tag("IZ3")
 	void execute_noArgs_returnsEmptyString() throws ReplException {
 		when(mockContext.getArgs()).thenReturn(List.of());
 
@@ -48,6 +54,7 @@ class EchoCommandTest {
 	}
 
 	@Test
+	@Tag("IZ3")
 	void execute_manyArgs_joinsAll() throws ReplException {
 		when(mockContext.getArgs()).thenReturn(List.of("a", "b", "c", "d", "e"));
 

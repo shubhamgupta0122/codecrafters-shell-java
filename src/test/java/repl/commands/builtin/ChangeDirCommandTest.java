@@ -1,5 +1,6 @@
 package repl.commands.builtin;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -32,7 +33,10 @@ class ChangeDirCommandTest {
 
 	private final ChangeDirCommand cdCommand = new ChangeDirCommand();
 
+	// === Stage #RA6: Navigation - The cd builtin: Absolute paths ===
+
 	@Test
+	@Tag("RA6")
 	void execute_withValidPath_returnsNull() throws ReplException, IOException {
 		Path subDir = Files.createDirectory(tempDir.resolve("subdir"));
 		when(mockContext.getArgs()).thenReturn(List.of(subDir.toString()));
@@ -45,17 +49,7 @@ class ChangeDirCommandTest {
 	}
 
 	@Test
-	void execute_noArgs_changesToHomeDir() throws ReplException, IOException {
-		when(mockContext.getArgs()).thenReturn(List.of());
-		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
-
-		String result = cdCommand.execute(mockContext);
-
-		assertNull(result);
-		verify(mockDirUtils).setCurrentDir("~");
-	}
-
-	@Test
+	@Tag("RA6")
 	void execute_nonExistentPath_returnsErrorMessage() throws ReplException, IOException {
 		when(mockContext.getArgs()).thenReturn(List.of("nonexistent"));
 		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
@@ -66,16 +60,24 @@ class ChangeDirCommandTest {
 		assertEquals("cd: nonexistent: No such file or directory", result);
 	}
 
-	@Test
-	void execute_withIOException_throwsRuntimeException() throws IOException {
-		when(mockContext.getArgs()).thenReturn(List.of("somepath"));
-		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
-		doThrow(new IOException("IO error")).when(mockDirUtils).setCurrentDir("somepath");
+	// === Stage #GP4: Navigation - The cd builtin: Home directory ===
 
-		assertThrows(RuntimeException.class, () -> cdCommand.execute(mockContext));
+	@Test
+	@Tag("GP4")
+	void execute_noArgs_changesToHomeDir() throws ReplException, IOException {
+		when(mockContext.getArgs()).thenReturn(List.of());
+		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
+
+		String result = cdCommand.execute(mockContext);
+
+		assertNull(result);
+		verify(mockDirUtils).setCurrentDir("~");
 	}
 
+	// === Stage #GQ9: Navigation - The cd builtin: Relative paths ===
+
 	@Test
+	@Tag("GQ9")
 	void execute_integrationTest_actuallyChangesDirectory() throws ReplException, IOException {
 		Path subDir = Files.createDirectory(tempDir.resolve("testdir"));
 		DirUtils realDirUtils = new DirUtils(tempDir);
@@ -87,5 +89,16 @@ class ChangeDirCommandTest {
 
 		assertNull(result);
 		assertEquals(subDir.toRealPath(), realDirUtils.getCurrentDir());
+	}
+
+	// === Error handling ===
+
+	@Test
+	void execute_withIOException_throwsRuntimeException() throws IOException {
+		when(mockContext.getArgs()).thenReturn(List.of("somepath"));
+		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
+		doThrow(new IOException("IO error")).when(mockDirUtils).setCurrentDir("somepath");
+
+		assertThrows(RuntimeException.class, () -> cdCommand.execute(mockContext));
 	}
 }

@@ -1,5 +1,6 @@
 package repl.commands.builtin;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -17,7 +18,10 @@ class ExitCommandTest {
 
 	private final ExitCommand exitCommand = new ExitCommand();
 
+	// === Stage #PN5: Implement exit ===
+
 	@Test
+	@Tag("PN5")
 	void execute_throwsGracefulExitException() {
 		assertThrows(GracefulExitException.class, () ->
 				exitCommand.execute(mockContext));

@@ -1,5 +1,6 @@
 package repl.commands.builtin;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -20,7 +21,10 @@ class TypeCommandTest {
 
 	private final TypeCommand typeCommand = new TypeCommand();
 
+	// === Stage #EZ5: Implement type ===
+
 	@Test
+	@Tag("EZ5")
 	void execute_builtinEcho_returnsShellBuiltin() throws ReplException {
 		when(mockContext.getArgs()).thenReturn(List.of("echo"));
 
@@ -30,6 +34,7 @@ class TypeCommandTest {
 	}
 
 	@Test
+	@Tag("EZ5")
 	void execute_builtinExit_returnsShellBuiltin() throws ReplException {
 		when(mockContext.getArgs()).thenReturn(List.of("exit"));
 
@@ -39,6 +44,7 @@ class TypeCommandTest {
 	}
 
 	@Test
+	@Tag("EZ5")
 	void execute_builtinType_returnsShellBuiltin() throws ReplException {
 		when(mockContext.getArgs()).thenReturn(List.of("type"));
 
@@ -48,6 +54,7 @@ class TypeCommandTest {
 	}
 
 	@Test
+	@Tag("EI0")
 	void execute_builtinPwd_returnsShellBuiltin() throws ReplException {
 		when(mockContext.getArgs()).thenReturn(List.of("pwd"));
 
@@ -66,6 +73,7 @@ class TypeCommandTest {
 	}
 
 	@Test
+	@Tag("EZ5")
 	void execute_unknownCommand_returnsNotFound() throws ReplException {
 		when(mockContext.getArgs()).thenReturn(List.of("unknowncmd123"));
 
@@ -74,7 +82,10 @@ class TypeCommandTest {
 		assertEquals("unknowncmd123: not found", result);
 	}
 
+	// === Stage #MG5: Locate executable files ===
+
 	@Test
+	@Tag("MG5")
 	void execute_existingExecutable_returnsPath() throws ReplException {
 		// 'ls' should exist on most Unix systems
 		when(mockContext.getArgs()).thenReturn(List.of("ls"));

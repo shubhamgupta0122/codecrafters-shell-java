@@ -1,5 +1,6 @@
 package repl.utils;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -32,8 +33,12 @@ class CommandExtractorUtilsTest {
 		assertEquals(List.of("hello", "world"), result.args());
 	}
 
+	// === Stage #NI6: Quoting - Single quotes ===
+
 	@Test
+	@Tag("NI6")
 	void get_singleQuotedArg_preservesSpaces() {
+		// echo 'example script' → example script
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'hello     world'");
 
 		assertEquals("echo", result.mainCommandStr());
@@ -41,7 +46,9 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("NI6")
 	void get_multipleSpacesOutsideQuotes_collapsesToSingleDelimiter() {
+		// echo script     world → script world
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello     world");
 
 		assertEquals("echo", result.mainCommandStr());
@@ -49,7 +56,9 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
-	void get_adjacentQuotedStrings_concatenatesIntoSingleArg() {
+	@Tag("NI6")
+	void get_adjacentSingleQuotedStrings_concatenatesIntoSingleArg() {
+		// 'world''example' → worldexample
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'hello''world'");
 
 		assertEquals("echo", result.mainCommandStr());
@@ -57,7 +66,9 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
-	void get_emptyQuotes_ignoredAndConcatenates() {
+	@Tag("NI6")
+	void get_emptySingleQuotes_ignoredAndConcatenates() {
+		// script''test → scripttest
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello''world");
 
 		assertEquals("echo", result.mainCommandStr());
@@ -65,7 +76,8 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
-	void get_quotedAndUnquotedMixed_concatenatesCorrectly() {
+	@Tag("NI6")
+	void get_singleQuotedAndUnquotedMixed_concatenatesCorrectly() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello'world'");
 
 		assertEquals("echo", result.mainCommandStr());
@@ -73,12 +85,211 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
-	void get_multipleQuotedArgs_parsesAsSeparateArgs() {
+	@Tag("NI6")
+	void get_multipleSingleQuotedArgs_parsesAsSeparateArgs() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'hello' 'world'");
 
 		assertEquals("echo", result.mainCommandStr());
 		assertEquals(List.of("hello", "world"), result.args());
 	}
+
+	@Test
+	@Tag("NI6")
+	void get_complexMixedSingleQuotingAndConcatenation() {
+		// echo 'shell     hello' 'world''example' script''test → shell     hello worldexample scripttest
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'shell     hello' 'world''example' script''test");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("shell     hello", "worldexample", "scripttest"), result.args());
+	}
+
+	@Test
+	@Tag("NI6")
+	void get_specialCharsInsideSingleQuotes_treatedLiterally() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo '$HOME ~/*.txt'");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("$HOME ~/*.txt"), result.args());
+	}
+
+	// === Stage #TG6: Quoting - Double quotes ===
+
+	@Test
+	@Tag("TG6")
+	void get_doubleQuotedArg_preservesSpaces() {
+		// echo "example test" → example test
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello     world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello     world"), result.args());
+	}
+
+	@Test
+	@Tag("TG6")
+	void get_adjacentDoubleQuotedStrings_concatenatesIntoSingleArg() {
+		// "hello""example" → helloexample
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello\"\"world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("helloworld"), result.args());
+	}
+
+	@Test
+	@Tag("TG6")
+	void get_emptyDoubleQuotes_ignoredAndConcatenates() {
+		// test""shell → testshell
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\"\"world");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("helloworld"), result.args());
+	}
+
+	@Test
+	@Tag("TG6")
+	void get_doubleQuotedAndUnquotedMixed_concatenatesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\"world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("helloworld"), result.args());
+	}
+
+	@Test
+	@Tag("TG6")
+	void get_multipleDoubleQuotedArgs_parsesAsSeparateArgs() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello\" \"world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello", "world"), result.args());
+	}
+
+	@Test
+	@Tag("TG6")
+	void get_doubleQuotedWithSpacesBetweenAndAdjacentQuotes() {
+		// echo "test  shell"  "hello""example" → test  shell helloexample
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"test  shell\"  \"hello\"\"example\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("test  shell", "helloexample"), result.args());
+	}
+
+	@Test
+	@Tag("TG6")
+	void get_singleQuoteInsideDoubleQuotes() {
+		// echo "script's" → script's
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"script's\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("script's"), result.args());
+	}
+
+	@Test
+	@Tag("TG6")
+	void get_complexMixedDoubleQuotesAndUnquoted() {
+		// echo "hello"  "script's"  test""shell → hello script's testshell
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello\"  \"script's\"  test\"\"shell");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello", "script's", "testshell"), result.args());
+	}
+
+	@Test
+	@Tag("TG6")
+	void get_specialCharsInsideDoubleQuotes_treatedLiterally() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"$HOME ~/*.txt\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("$HOME ~/*.txt"), result.args());
+	}
+
+	@Test
+	@Tag("TG6")
+	void get_mixedSingleAndDoubleQuotes_handledCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'hello'\"world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("helloworld"), result.args());
+	}
+
+	// === Stage #YT5: Quoting - Backslash outside quotes ===
+
+	@Test
+	@Tag("YT5")
+	void get_escapedSpace_createsSingleArg() {
+		// echo hello\ world → hello world
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\ world");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello world"), result.args());
+	}
+
+	@Test
+	@Tag("YT5")
+	void get_multipleConsecutiveEscapedSpaces() {
+		// echo shell\ \ \ \ \ \ script → shell      script
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo shell\\ \\ \\ \\ \\ \\ script");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("shell      script"), result.args());
+	}
+
+	@Test
+	@Tag("YT5")
+	void get_escapedQuoteCharacters() {
+		// echo \'\"script world\"\' → '"script world"'
+		// When echoed, args ['\"script, world\"'] join to: '"script world"'
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \\'\\\"script world\\\"\\'" );
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("'\"script", "world\"'"), result.args());
+	}
+
+	@Test
+	@Tag("YT5")
+	void get_escapedRegularCharacter() {
+		// echo world\ntest → worldntest (backslash-n is just 'n', not newline)
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo world\\ntest");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("worldntest"), result.args());
+	}
+
+	@Test
+	@Tag("YT5")
+	void get_escapedBackslash_preservesBackslash() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\\\world");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello\\world"), result.args());
+	}
+
+	@Test
+	@Tag("YT5")
+	void get_multipleEscapedSpaces_createsSingleArg() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\ beautiful\\ world");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello beautiful world"), result.args());
+	}
+
+	@Test
+	@Tag("YT5")
+	void get_escapedCharacterAtEnd_preservesCharacter() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\!");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello!"), result.args());
+	}
+
+	@Test
+	@Tag("YT5")
+	void get_mixedEscapeAndQuotes_handledCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'hello'\\ world");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello world"), result.args());
+	}
+
+	// === General parsing tests ===
 
 	@Test
 	void get_leadingWhitespace_strippedBeforeParsing() {
@@ -102,109 +313,5 @@ class CommandExtractorUtilsTest {
 
 		assertEquals("echo", result.mainCommandStr());
 		assertEquals(List.of("hello"), result.args());
-	}
-
-	@Test
-	void get_specialCharsInsideQuotes_treatedLiterally() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo '$HOME ~/*.txt'");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("$HOME ~/*.txt"), result.args());
-	}
-
-	@Test
-	void get_doubleQuotedArg_preservesSpaces() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello     world\"");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("hello     world"), result.args());
-	}
-
-	@Test
-	void get_adjacentDoubleQuotedStrings_concatenatesIntoSingleArg() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello\"\"world\"");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("helloworld"), result.args());
-	}
-
-	@Test
-	void get_emptyDoubleQuotes_ignoredAndConcatenates() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\"\"world");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("helloworld"), result.args());
-	}
-
-	@Test
-	void get_mixedQuotedAndUnquoted_concatenatesCorrectly() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\"world\"");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("helloworld"), result.args());
-	}
-
-	@Test
-	void get_multipleDoubleQuotedArgs_parsesAsSeparateArgs() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello\" \"world\"");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("hello", "world"), result.args());
-	}
-
-	@Test
-	void get_specialCharsInsideDoubleQuotes_treatedLiterally() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"$HOME ~/*.txt\"");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("$HOME ~/*.txt"), result.args());
-	}
-
-	@Test
-	void get_mixedSingleAndDoubleQuotes_handledCorrectly() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'hello'\"world\"");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("helloworld"), result.args());
-	}
-
-	@Test
-	void get_escapedSpace_createsingleArg() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\ world");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("hello world"), result.args());
-	}
-
-	@Test
-	void get_escapedBackslash_preservesBackslash() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\\\world");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("hello\\world"), result.args());
-	}
-
-	@Test
-	void get_multipleEscapedSpaces_createsingleArg() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\ beautiful\\ world");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("hello beautiful world"), result.args());
-	}
-
-	@Test
-	void get_escapedCharacterAtEnd_preservesCharacter() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\!");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("hello!"), result.args());
-	}
-
-	@Test
-	void get_mixedEscapeAndQuotes_handledCorrectly() {
-		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'hello'\\ world");
-
-		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("hello world"), result.args());
 	}
 }
