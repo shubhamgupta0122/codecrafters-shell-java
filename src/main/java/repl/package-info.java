@@ -2,7 +2,8 @@
  * Core REPL (Read-Eval-Print Loop) implementation for a POSIX-compliant shell.
  *
  * <p>Main components: {@link repl.REPL} (main loop), {@link repl.ReplEvaluator} (command parsing),
- * {@link repl.BuiltinCommand} (builtin registry), {@link repl.Constants} (shared constants).
+ * {@link repl.BuiltinCommand} (builtin registry), {@link repl.Constants} (shared constants),
+ * {@link repl.ReplContext} (shared context for commands).
  *
  * <p>Flow: Read input → Parse and evaluate → Execute command → Print output → Loop
  *

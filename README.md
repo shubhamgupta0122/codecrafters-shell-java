@@ -1,35 +1,42 @@
 [![progress-banner](https://backend.codecrafters.io/progress/shell/b02efed5-8cc3-4123-9194-81695633a548)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
 
-This is a starting point for Java solutions to the
-["Build Your Own Shell" Challenge](https://app.codecrafters.io/courses/shell/overview).
+This project is a Java implementation of a basic POSIX-compliant shell, developed as part of the "Build Your Own Shell" challenge on [CodeCrafters.io](https://app.codecrafters.io/courses/shell/overview).
 
-In this challenge, you'll build your own POSIX compliant shell that's capable of
-interpreting shell commands, running external programs and builtin commands like
-cd, pwd, echo and more. Along the way, you'll learn about shell command parsing,
-REPLs, builtin commands, and more.
+## Features
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+*   **Interactive REPL:** A Read-Eval-Print Loop for interactive use.
+*   **Built-in Commands:**
+    *   `echo`: Prints arguments to the console.
+    *   `exit`: Exits the shell.
+    *   `pwd`: Prints the current working directory.
+    *   `cd`: Changes the current working directory.
+    *   `type`: Displays the type of command (built-in or executable).
+*   **External Command Execution:** Finds and executes commands from the system's `PATH`.
+*   **Command History:** Basic command history (up/down arrows) is supported by the underlying terminal.
 
-# Passing the first stage
+## Project Structure
 
-The entry point for your `shell` implementation is in `src/main/java/Main.java`.
-Study and uncomment the relevant code, and push your changes to pass the first
-stage:
+The project is organized into several packages:
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
-```
+*   `repl`: Contains the core REPL logic, including the main loop (`REPL.java`) and the command evaluator (`ReplEvaluator.java`).
+*   `repl.commands`: Defines the `Command` interface and its various implementations.
+    *   `repl.commands.builtin`: Contains the implementations of the built-in commands.
+*   `repl.exceptions`: Custom exceptions for handling shell-specific errors and graceful exit.
+*   `repl.utils`: Utility classes for handling directory operations (`DirUtils.java`) and finding executables (`ExecutableUtils.java`).
 
-Time to move on to the next stage!
+## Getting Started
 
-# Stage 2 & beyond
+1.  **Prerequisites:**
+    *   Java 25 or higher (with preview features enabled)
+    *   Maven 3.x or higher
 
-Note: This section is for stages 2 and beyond.
+2.  **Building the project:**
+    ```sh
+    mvn package
+    ```
 
-1. Ensure you have `mvn` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main/java/Main.java`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+3.  **Running the shell:**
+    ```sh
+    ./your_program.sh
+    ```
+    This script executes the compiled JAR file.
