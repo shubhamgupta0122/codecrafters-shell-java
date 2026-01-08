@@ -99,7 +99,7 @@ public class CommandExtractorUtils {
 				escaping = false;
 				addCharToLastArg(c, normalizedCommandArgs);
 				continue;
-			} else if(c == BACKSLASH) {
+			} else if(!sQuoting && !dQuoting && c == BACKSLASH) {
 				escaping = true;
 				continue;
 			}
