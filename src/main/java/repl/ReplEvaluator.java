@@ -8,11 +8,6 @@ import repl.utils.ExecutableUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static repl.Constants.WHITESPACE;
 
 /**
  * Parses and evaluates user input to create the appropriate Command object.
@@ -27,17 +22,7 @@ import static repl.Constants.WHITESPACE;
  */
 public class ReplEvaluator {
 
-	/** The context builder with shared services (reused across commands). */
-	private final ReplContext.Builder contextBuilder;
-
-	/** The original input string from the user. */
-	private final String originalInput;
-
-	/** The main command name extracted from input. */
-	private String mainCommandStr;
-
-	/** The list of arguments following the command. */
-	private List<String> commandArgs;
+	private final ReplContext context;
 
 	/**
 	 * Creates a new evaluator for the given input.
@@ -46,8 +31,10 @@ public class ReplEvaluator {
 	 * @param contextBuilder the context builder with shared services
 	 */
 	public ReplEvaluator(String input, ReplContext.Builder contextBuilder) {
-		this.originalInput = input;
-		this.contextBuilder = contextBuilder;
+		// Build context with per-request data
+		context = contextBuilder
+				.originalInput(input)
+				.build();
 	}
 
 	/**
@@ -60,11 +47,11 @@ public class ReplEvaluator {
 	 * @throws ReplException if command execution fails
 	 */
 	public String eval() throws ReplException {
-		extractMainCommand();
-		if(mainCommandStr != null) {
-			return processCommand();
+		if(context.getMainCommandStr() == null) {
+			throw new RuntimeException("Null Input???");
 		}
-		throw new RuntimeException("Null Input???");
+
+		return processCommand();
 	}
 
 	/**
@@ -78,7 +65,7 @@ public class ReplEvaluator {
 	 * @throws ReplException if command execution fails
 	 */
 	private String processCommand() throws ReplException {
-		Class<? extends Command> commandClass = BuiltinCommand.allCommandMap.get(mainCommandStr);
+		Class<? extends Command> commandClass = BuiltinCommand.allCommandMap.get(context.getMainCommandStr());
 		Command command;
 		if(commandClass != null) {
 			try {
@@ -92,36 +79,14 @@ public class ReplEvaluator {
 				throw new RuntimeException(e);
 			}
 		} else {
-			Path executablePath = ExecutableUtils.findExecutablePath(mainCommandStr);
+			Path executablePath = ExecutableUtils.findExecutablePath(context.getMainCommandStr());
 			if(executablePath != null)
 				command = new ExecutableCommand();
 			else
 				command = new BadCommand();
 		}
 
-		// Build context with per-request data
-		ReplContext context = contextBuilder
-				.originalInput(originalInput)
-				.mainCommandStr(mainCommandStr)
-				.args(commandArgs)
-				.build();
-
 		return command.execute(context);
 	}
 
-	/**
-	 * Extracts the command name and arguments from the input string.
-	 *
-	 * <p>Splits input on whitespace, setting mainCommandStr to the first token
-	 * and commandArgs to the remaining tokens.
-	 */
-	private void extractMainCommand() {
-		List<String> splitCommand = Arrays.stream(originalInput.split(WHITESPACE)).toList();
-		mainCommandStr = splitCommand.getFirst();
-		if(mainCommandStr == null) {
-			commandArgs = new ArrayList<>();
-		} else {
-			commandArgs = splitCommand.subList(1, splitCommand.size());
-		}
-	}
 }

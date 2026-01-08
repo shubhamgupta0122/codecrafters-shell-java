@@ -30,11 +30,9 @@ class ReplContextTest {
 	}
 
 	@Test
-	void build_withAllFields_createsContext() {
+	void build_withOriginalInput_createsContext() {
 		ReplContext context = builder
 				.originalInput("echo hello")
-				.mainCommandStr("echo")
-				.args(List.of("hello"))
 				.build();
 
 		assertNotNull(context);
@@ -44,8 +42,6 @@ class ReplContextTest {
 	void getDirUtils_returnsInjectedInstance() {
 		ReplContext context = builder
 				.originalInput("test")
-				.mainCommandStr("test")
-				.args(List.of())
 				.build();
 
 		assertSame(mockDirUtils, context.getDirUtils());
@@ -55,42 +51,33 @@ class ReplContextTest {
 	void getOriginalInput_returnsSetValue() {
 		ReplContext context = builder
 				.originalInput("echo hello world")
-				.mainCommandStr("echo")
-				.args(List.of("hello", "world"))
 				.build();
 
 		assertEquals("echo hello world", context.getOriginalInput());
 	}
 
 	@Test
-	void getMainCommandStr_returnsSetValue() {
+	void getMainCommandStr_returnsParsedCommand() {
 		ReplContext context = builder
 				.originalInput("pwd")
-				.mainCommandStr("pwd")
-				.args(List.of())
 				.build();
 
 		assertEquals("pwd", context.getMainCommandStr());
 	}
 
 	@Test
-	void getArgs_returnsSetValue() {
-		List<String> args = List.of("arg1", "arg2", "arg3");
+	void getArgs_returnsParsedArgs() {
 		ReplContext context = builder
 				.originalInput("cmd arg1 arg2 arg3")
-				.mainCommandStr("cmd")
-				.args(args)
 				.build();
 
-		assertEquals(args, context.getArgs());
+		assertEquals(List.of("arg1", "arg2", "arg3"), context.getArgs());
 	}
 
 	@Test
-	void getArgs_emptyList_returnsEmptyList() {
+	void getArgs_noArgs_returnsEmptyList() {
 		ReplContext context = builder
 				.originalInput("pwd")
-				.mainCommandStr("pwd")
-				.args(List.of())
 				.build();
 
 		assertTrue(context.getArgs().isEmpty());
@@ -100,14 +87,10 @@ class ReplContextTest {
 	void builder_canBeReusedForMultipleContexts() {
 		ReplContext context1 = builder
 				.originalInput("echo first")
-				.mainCommandStr("echo")
-				.args(List.of("first"))
 				.build();
 
 		ReplContext context2 = builder
 				.originalInput("echo second")
-				.mainCommandStr("echo")
-				.args(List.of("second"))
 				.build();
 
 		assertEquals("echo first", context1.getOriginalInput());
@@ -120,8 +103,6 @@ class ReplContextTest {
 	void builder_fluentApi_allowsChaining() {
 		ReplContext context = ReplContext.builder(mockDirUtils)
 				.originalInput("test")
-				.mainCommandStr("test")
-				.args(List.of())
 				.build();
 
 		assertNotNull(context);

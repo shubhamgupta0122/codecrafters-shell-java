@@ -1,6 +1,7 @@
 package repl;
 
 import repl.utils.DirUtils;
+import repl.utils.CommandExtractorUtils;
 
 import java.util.List;
 
@@ -11,22 +12,22 @@ import java.util.List;
  * <ul>
  *   <li><b>Shared services</b> (injected once): DirUtils, and future services like
  *       environment variables, command history, etc.</li>
- *   <li><b>Per-request data</b> (set per command): original input, command name, arguments</li>
+ *   <li><b>Per-request data</b> (derived per command): original input, command name, arguments</li>
  * </ul>
  *
  * <p>Use {@link Builder} to construct instances. The builder is created with shared
- * services, then per-request data is set for each command execution.
+ * services, then {@code originalInput} is set for each command. The command name and
+ * arguments are automatically parsed from the input during {@link Builder#build()}.
  *
  * <p>Example usage:
  * <pre>{@code
  * // Create builder once with shared services
  * ReplContext.Builder ctxBuilder = ReplContext.builder(dirUtils);
  *
- * // For each command, build context with per-request data
+ * // For each command, build context with original input
+ * // (command name and args are parsed automatically)
  * ReplContext ctx = ctxBuilder
  *     .originalInput(input)
- *     .mainCommandStr(cmd)
- *     .args(args)
  *     .build();
  * }</pre>
  */
@@ -143,33 +144,14 @@ public class ReplContext {
 		}
 
 		/**
-		 * Sets the main command name.
-		 *
-		 * @param mainCommandStr the command name
-		 * @return this builder for chaining
-		 */
-		public Builder mainCommandStr(String mainCommandStr) {
-			this.mainCommandStr = mainCommandStr;
-			return this;
-		}
-
-		/**
-		 * Sets the command arguments.
-		 *
-		 * @param args the list of arguments
-		 * @return this builder for chaining
-		 */
-		public Builder args(List<String> args) {
-			this.args = args;
-			return this;
-		}
-
-		/**
 		 * Builds the ReplContext instance.
 		 *
 		 * @return a new immutable ReplContext
 		 */
 		public ReplContext build() {
+			CommandExtractorUtils.ExtractedCommand extractedCommand = CommandExtractorUtils.get(originalInput);
+			mainCommandStr = extractedCommand.mainCommandStr();
+			args = extractedCommand.args();
 			return new ReplContext(this);
 		}
 	}

@@ -32,7 +32,7 @@ class ReplEvaluatorTest {
 
 		String result = evaluator.eval();
 
-		assertEquals("hello ", result);
+		assertEquals("hello", result);
 	}
 
 	@Test
@@ -41,7 +41,7 @@ class ReplEvaluatorTest {
 
 		String result = evaluator.eval();
 
-		assertEquals("hello world ", result);
+		assertEquals("hello world", result);
 	}
 
 	@Test
@@ -111,7 +111,6 @@ class ReplEvaluatorTest {
 
 		String result = evaluator.eval();
 
-		// echo is a builtin, so it returns with trailing space
-		assertEquals("external ", result);
+		assertEquals("external", result);
 	}
 }

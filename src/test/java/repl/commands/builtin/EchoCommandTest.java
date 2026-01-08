@@ -21,12 +21,12 @@ class EchoCommandTest {
 	private final EchoCommand echoCommand = new EchoCommand();
 
 	@Test
-	void execute_singleArg_returnsArgWithSpace() throws ReplException {
+	void execute_singleArg_returnsArg() throws ReplException {
 		when(mockContext.getArgs()).thenReturn(List.of("hello"));
 
 		String result = echoCommand.execute(mockContext);
 
-		assertEquals("hello ", result);
+		assertEquals("hello", result);
 	}
 
 	@Test
@@ -35,7 +35,7 @@ class EchoCommandTest {
 
 		String result = echoCommand.execute(mockContext);
 
-		assertEquals("hello world ", result);
+		assertEquals("hello world", result);
 	}
 
 	@Test
@@ -53,6 +53,6 @@ class EchoCommandTest {
 
 		String result = echoCommand.execute(mockContext);
 
-		assertEquals("a b c d e ", result);
+		assertEquals("a b c d e", result);
 	}
 }
