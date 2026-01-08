@@ -92,35 +92,49 @@ public class CommandExtractorUtils {
 		List<String> normalizedCommandArgs = new ArrayList<>();
 		boolean sQuoting = false;
 		boolean dQuoting = false;
+		boolean escaping = false;
 
 		for (char c : commandArgsStr.toCharArray()) {
+			if(escaping) {
+				escaping = false;
+				addCharToLastArg(c, normalizedCommandArgs);
+				continue;
+			} else if(c == BACKSLASH) {
+				escaping = true;
+				continue;
+			}
+
 			if(!sQuoting && c == DOUBLE_QUOTE) {
 				dQuoting = !dQuoting;
 				continue;
 			}
+
 			if(!dQuoting && c == SINGLE_QUOTE) {
 				sQuoting = !sQuoting;
 				continue;
 			}
-			String lastArg = normalizedCommandArgs.isEmpty() ? "" : normalizedCommandArgs.getLast();
+
 			if(dQuoting || sQuoting) {
-				lastArg = lastArg + c;
-				removeLastIfPresent(normalizedCommandArgs);
-				normalizedCommandArgs.add(lastArg);
+				addCharToLastArg(c, normalizedCommandArgs);
 			} else {
 				if(c == WHITESPACE) {
 					if(!hasLastElementAsEmptyString(normalizedCommandArgs))
 						normalizedCommandArgs.add("");
 				} else {
-					lastArg = lastArg + c;
-					removeLastIfPresent(normalizedCommandArgs);
-					normalizedCommandArgs.add(lastArg);
+					addCharToLastArg(c, normalizedCommandArgs);
 				}
 			}
 		}
 		if(hasLastElementAsEmptyString(normalizedCommandArgs))
 			normalizedCommandArgs.removeLast();
 		return normalizedCommandArgs;
+	}
+
+	private static void addCharToLastArg(char c, List<String> normalizedCommandArgs) {
+		String lastArg = normalizedCommandArgs.isEmpty() ? "" : normalizedCommandArgs.getLast();
+		lastArg = lastArg + c;
+		removeLastIfPresent(normalizedCommandArgs);
+		normalizedCommandArgs.add(lastArg);
 	}
 
 	private static boolean hasLastElementAsEmptyString(List<String> normalizedCommandArgs) {
