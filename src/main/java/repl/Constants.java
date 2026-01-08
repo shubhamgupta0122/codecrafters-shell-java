@@ -15,6 +15,7 @@ public class Constants {
 	/** Double quote character used for literal string parsing in shell commands. */
 	public static final Character DOUBLE_QUOTE = '"';
 
+	/** Backslash character used for escaping special characters outside quotes. */
 	public static final Character BACKSLASH = '\\';
 
 //	public static final Character DOLLAR = '$';

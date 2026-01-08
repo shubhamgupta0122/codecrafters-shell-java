@@ -12,7 +12,10 @@ This project is a Java implementation of a basic POSIX-compliant shell, develope
     *   `cd`: Changes the current working directory.
     *   `type`: Displays the type of command (built-in or executable).
 *   **External Command Execution:** Finds and executes commands from the system's `PATH`.
-*   **Command History:** Basic command history (up/down arrows) is supported by the underlying terminal.
+*   **Quoting and Escaping:**
+    *   Single quotes (`'...'`): Preserves literal text including spaces.
+    *   Double quotes (`"..."`): Preserves literal text including spaces.
+    *   Escape character (`\`): Escapes the next character outside quotes.
 
 ## Project Structure
 

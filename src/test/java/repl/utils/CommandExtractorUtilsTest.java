@@ -167,4 +167,44 @@ class CommandExtractorUtilsTest {
 		assertEquals("echo", result.mainCommandStr());
 		assertEquals(List.of("helloworld"), result.args());
 	}
+
+	@Test
+	void get_escapedSpace_createsingleArg() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\ world");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello world"), result.args());
+	}
+
+	@Test
+	void get_escapedBackslash_preservesBackslash() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\\\world");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello\\world"), result.args());
+	}
+
+	@Test
+	void get_multipleEscapedSpaces_createsingleArg() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\ beautiful\\ world");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello beautiful world"), result.args());
+	}
+
+	@Test
+	void get_escapedCharacterAtEnd_preservesCharacter() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\!");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello!"), result.args());
+	}
+
+	@Test
+	void get_mixedEscapeAndQuotes_handledCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'hello'\\ world");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello world"), result.args());
+	}
 }

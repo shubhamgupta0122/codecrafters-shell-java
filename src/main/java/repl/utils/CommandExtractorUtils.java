@@ -9,14 +9,15 @@ import static repl.Constants.*;
  * Utility class for extracting and parsing shell commands from input strings.
  *
  * <p>Provides functionality to split a raw command line into a main command
- * and its arguments, properly handling whitespace and quoted strings (single and double quotes).
+ * and its arguments, properly handling whitespace, quoted strings, and escape characters.
  *
- * <p>Handles single and double-quote parsing according to shell semantics:
+ * <p>Handles quoting and escaping according to shell semantics:
  * <ul>
  *   <li>Characters inside single or double quotes are treated literally</li>
  *   <li>Whitespace inside single or double quotes is preserved</li>
  *   <li>Adjacent quoted strings are concatenated into a single argument</li>
  *   <li>Empty quotes are ignored</li>
+ *   <li>Backslash ({@code \}) outside quotes escapes the next character, treating it literally</li>
  * </ul>
  *
  * <p>Examples:
@@ -35,6 +36,12 @@ import static repl.Constants.*;
  *
  * // Mixing single and double quotes
  * get("echo 'hello'"world"") → ExtractedCommand("echo", ["helloworld"])
+ *
+ * // Escaped space creates single argument
+ * get("echo hello\ world") → ExtractedCommand("echo", ["hello world"])
+ *
+ * // Escaped backslash
+ * get("echo hello\\world") → ExtractedCommand("echo", ["hello\world"])
  * }</pre>
  */
 public class CommandExtractorUtils {
@@ -79,10 +86,12 @@ public class CommandExtractorUtils {
 	/**
 	 * Parses a command arguments string into a list of individual arguments.
 	 *
-	 * <p>Uses a state machine to handle single quotes:
+	 * <p>Uses a state machine to handle quoting and escaping:
 	 * <ul>
-	 *   <li>Outside quotes: whitespace delimits arguments</li>
-	 *   <li>Inside quotes: all characters (including whitespace) are literal</li>
+	 *   <li>Outside quotes: whitespace delimits arguments, backslash escapes the next character</li>
+	 *   <li>Inside single quotes: all characters (including whitespace) are literal</li>
+	 *   <li>Inside double quotes: all characters (including whitespace) are literal</li>
+	 *   <li>Escape character ({@code \}): outside quotes, causes the next character to be treated literally</li>
 	 * </ul>
 	 *
 	 * @param commandArgsStr the arguments portion of the input (after command name)
