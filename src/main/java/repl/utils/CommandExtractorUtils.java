@@ -3,30 +3,38 @@ package repl.utils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static repl.Constants.SINGLE_QUOTE;
-import static repl.Constants.WHITESPACE;
+import static repl.Constants.*;
 
 /**
  * Utility class for extracting and parsing shell commands from input strings.
  *
- * <p>Handles single-quote parsing according to shell semantics:
+ * <p>Provides functionality to split a raw command line into a main command
+ * and its arguments, properly handling whitespace and quoted strings (single and double quotes).
+ *
+ * <p>Handles single and double-quote parsing according to shell semantics:
  * <ul>
- *   <li>Characters inside single quotes are treated literally</li>
- *   <li>Whitespace inside single quotes is preserved</li>
+ *   <li>Characters inside single or double quotes are treated literally</li>
+ *   <li>Whitespace inside single or double quotes is preserved</li>
  *   <li>Adjacent quoted strings are concatenated into a single argument</li>
  *   <li>Empty quotes are ignored</li>
  * </ul>
  *
  * <p>Examples:
  * <pre>{@code
- * // Spaces preserved inside quotes
+ * // Spaces preserved inside single quotes
  * get("echo 'hello     world'") → ExtractedCommand("echo", ["hello     world"])
+ *
+ * // Spaces preserved inside double quotes
+ * get("echo "hello     world"") → ExtractedCommand("echo", ["hello     world"])
  *
  * // Spaces collapsed outside quotes
  * get("echo hello     world") → ExtractedCommand("echo", ["hello", "world"])
  *
  * // Adjacent quotes concatenate
  * get("echo 'hello''world'") → ExtractedCommand("echo", ["helloworld"])
+ *
+ * // Mixing single and double quotes
+ * get("echo 'hello'"world"") → ExtractedCommand("echo", ["helloworld"])
  * }</pre>
  */
 public class CommandExtractorUtils {
@@ -83,14 +91,19 @@ public class CommandExtractorUtils {
 	private static List<String> normalizeCommandArgs(String commandArgsStr) {
 		List<String> normalizedCommandArgs = new ArrayList<>();
 		boolean sQuoting = false;
+		boolean dQuoting = false;
 
 		for (char c : commandArgsStr.toCharArray()) {
-			if(c == SINGLE_QUOTE) {
+			if(!sQuoting && c == DOUBLE_QUOTE) {
+				dQuoting = !dQuoting;
+				continue;
+			}
+			if(!dQuoting && c == SINGLE_QUOTE) {
 				sQuoting = !sQuoting;
 				continue;
 			}
 			String lastArg = normalizedCommandArgs.isEmpty() ? "" : normalizedCommandArgs.getLast();
-			if(sQuoting) {
+			if(dQuoting || sQuoting) {
 				lastArg = lastArg + c;
 				removeLastIfPresent(normalizedCommandArgs);
 				normalizedCommandArgs.add(lastArg);

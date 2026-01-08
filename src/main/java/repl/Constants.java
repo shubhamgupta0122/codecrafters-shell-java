@@ -8,5 +8,7 @@ public class Constants {
 	public static final Character WHITESPACE = ' ';
 
 	/** Single quote character used for literal string parsing in shell commands. */
-	public static final Character SINGLE_QUOTE = '\'';
+		public static final Character SINGLE_QUOTE = '\'';
+		/** Double quote character used for literal string parsing in shell commands. */
+		public static final Character DOUBLE_QUOTE = '"';
 }

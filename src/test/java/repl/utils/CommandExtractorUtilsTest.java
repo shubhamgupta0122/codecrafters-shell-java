@@ -111,4 +111,60 @@ class CommandExtractorUtilsTest {
 		assertEquals("echo", result.mainCommandStr());
 		assertEquals(List.of("$HOME ~/*.txt"), result.args());
 	}
+
+	@Test
+	void get_doubleQuotedArg_preservesSpaces() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello     world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello     world"), result.args());
+	}
+
+	@Test
+	void get_adjacentDoubleQuotedStrings_concatenatesIntoSingleArg() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello\"\"world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("helloworld"), result.args());
+	}
+
+	@Test
+	void get_emptyDoubleQuotes_ignoredAndConcatenates() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\"\"world");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("helloworld"), result.args());
+	}
+
+	@Test
+	void get_mixedQuotedAndUnquoted_concatenatesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\"world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("helloworld"), result.args());
+	}
+
+	@Test
+	void get_multipleDoubleQuotedArgs_parsesAsSeparateArgs() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello\" \"world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello", "world"), result.args());
+	}
+
+	@Test
+	void get_specialCharsInsideDoubleQuotes_treatedLiterally() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"$HOME ~/*.txt\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("$HOME ~/*.txt"), result.args());
+	}
+
+	@Test
+	void get_mixedSingleAndDoubleQuotes_handledCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'hello'\"world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("helloworld"), result.args());
+	}
 }
