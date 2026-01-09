@@ -227,8 +227,8 @@ Context-based injection pattern:
 
 **Quoting & Escaping Semantics:**
 - **Single quotes (`'`)** - Literal string, all chars treated as-is, no escape sequences
-- **Double quotes (`"`)** - Most chars treated as-is, but backslash escapes the next character
-- **Backslash (`\`)** - Outside quotes or inside double quotes, escapes the next character
+- **Double quotes (`"`)** - Most chars treated as-is, but backslash only escapes: `"`, `\`, `$`, `` ` ``, `\n`
+- **Backslash (`\`)** - Outside quotes: escapes any char; inside double quotes: only escapes specific chars
 - **Adjacent quoted strings** - Concatenated into single argument
 - **Empty quotes** - Ignored/removed
 
@@ -237,8 +237,9 @@ Context-based injection pattern:
 echo 'hello     world'    → args: ["hello     world"]  # spaces preserved
 echo hello\ world         → args: ["hello world"]      # escaped space
 echo 'hello'"world"       → args: ["helloworld"]       # concatenated
-echo "hello\world"        → args: ["helloworld"]       # backslash escapes in double quotes
-echo "test\\case"         → args: ["test\case"]        # double backslash → single backslash
+echo "hello\3"            → args: ["hello\3"]          # '3' not escapable, backslash preserved
+echo "test\\case"         → args: ["test\case"]        # backslash escapes backslash
+echo "say \"hi\""         → args: ["say "hi""]         # backslash escapes quote
 ```
 
 ---

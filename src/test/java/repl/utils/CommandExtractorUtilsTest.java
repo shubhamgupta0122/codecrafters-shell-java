@@ -221,11 +221,11 @@ class CommandExtractorUtilsTest {
 
 	@Test
 	@Tag("TG6")
-	void get_backslashInsideDoubleQuotes_escapesNextChar() {
+	void get_backslashInsideDoubleQuotes_preservedForNonEscapableChars() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello\\world\"");
 
 		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("helloworld"), result.args());
+		assertEquals(List.of("hello\\world"), result.args());
 	}
 
 	@Test

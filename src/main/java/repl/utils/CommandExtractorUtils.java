@@ -14,11 +14,12 @@ import static repl.Constants.*;
  * <p>Handles quoting and escaping according to shell semantics:
  * <ul>
  *   <li>Characters inside single quotes are treated literally (no escape sequences)</li>
- *   <li>Characters inside double quotes are treated literally, except backslash escapes</li>
+ *   <li>Inside double quotes, backslash only escapes: {@code "}, {@code \}, {@code $}, {@code `}, {@code \n}</li>
+ *   <li>For non-escapable chars in double quotes, backslash is preserved literally</li>
  *   <li>Whitespace inside single or double quotes is preserved</li>
  *   <li>Adjacent quoted strings are concatenated into a single argument</li>
  *   <li>Empty quotes are ignored</li>
- *   <li>Backslash ({@code \}) outside quotes or inside double quotes escapes the next character</li>
+ *   <li>Backslash ({@code \}) outside quotes escapes any following character</li>
  * </ul>
  *
  * <p>Examples:
@@ -44,11 +45,14 @@ import static repl.Constants.*;
  * // Escaped backslash outside quotes
  * get("echo hello\\world") → ExtractedCommand("echo", ["hello\world"])
  *
- * // Backslash escapes inside double quotes
- * get("echo "hello\world"") → ExtractedCommand("echo", ["helloworld"])
+ * // Backslash in double quotes - only escapes specific chars
+ * get("echo "hello\3"") → ExtractedCommand("echo", ["hello\3"])  // '3' not escapable
  *
- * // Double backslash in double quotes produces single backslash
+ * // Backslash escapes backslash in double quotes
  * get("echo "test\\case"") → ExtractedCommand("echo", ["test\case"])
+ *
+ * // Backslash escapes double quote in double quotes
+ * get("echo "say \"hi\""") → ExtractedCommand("echo", ["say "hi""])
  * }</pre>
  */
 public class CommandExtractorUtils {
@@ -71,9 +75,9 @@ public class CommandExtractorUtils {
 	 * <ul>
 	 *   <li>{@link #NORMAL} - Default state, outside any quotes</li>
 	 *   <li>{@link #SINGLE_QUOTED} - Inside single quotes, all characters are literal</li>
-	 *   <li>{@link #DOUBLE_QUOTED} - Inside double quotes, backslash can escape characters</li>
+	 *   <li>{@link #DOUBLE_QUOTED} - Inside double quotes, backslash can escape specific characters</li>
 	 *   <li>{@link #ESCAPING} - Next character will be escaped (outside quotes)</li>
-	 *   <li>{@link #ESCAPING_IN_DOUBLE_QUOTES} - Next character will be escaped (inside double quotes)</li>
+	 *   <li>{@link #ESCAPING_IN_DOUBLE_QUOTES} - Next character may be escaped (inside double quotes, if escapable)</li>
 	 * </ul>
 	 */
 	private enum ParserState {
@@ -83,13 +87,13 @@ public class CommandExtractorUtils {
 		/** Inside single quotes; all characters (including whitespace) are treated literally. */
 		SINGLE_QUOTED,
 
-		/** Inside double quotes; most characters are literal, but backslash escapes the next character. */
+		/** Inside double quotes; most characters are literal, but backslash can escape specific chars. */
 		DOUBLE_QUOTED,
 
 		/** Next character will be escaped and treated literally (outside quotes). */
 		ESCAPING,
 
-		/** Next character will be escaped and treated literally (inside double quotes). */
+		/** After backslash in double quotes; next char escaped only if in escapable set. */
 		ESCAPING_IN_DOUBLE_QUOTES
 	}
 
@@ -126,8 +130,8 @@ public class CommandExtractorUtils {
 	 * <ul>
 	 *   <li>Outside quotes: whitespace delimits arguments, backslash escapes the next character</li>
 	 *   <li>Inside single quotes: all characters (including whitespace) are literal, no escaping</li>
-	 *   <li>Inside double quotes: most characters are literal, but backslash escapes the next character</li>
-	 *   <li>Escape character ({@code \}): outside quotes or inside double quotes, causes the next character to be treated literally</li>
+	 *   <li>Inside double quotes: most characters are literal, backslash only escapes specific chars</li>
+	 *   <li>Escape character ({@code \}): outside quotes, escapes any char; inside double quotes, only escapes: {@code "}, {@code \}, {@code $}, {@code `}, {@code \n}</li>
 	 * </ul>
 	 *
 	 * <p>Uses StringBuilder for efficient string building during parsing.
@@ -152,6 +156,9 @@ public class CommandExtractorUtils {
 				}
 
 				case ESCAPING_IN_DOUBLE_QUOTES -> {
+					if(!DOUBLE_QUOTE_ESCAPABLE_CHARS.contains(c)) {
+						addCharToLastArg(BACKSLASH, builders);
+					}
 					addCharToLastArg(c, builders);
 					yield ParserState.DOUBLE_QUOTED;
 				}
