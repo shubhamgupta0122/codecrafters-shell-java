@@ -444,9 +444,10 @@ class CommandExtractorUtilsTest {
 		assertEquals("Unclosed quote in input", exception.getMessage());
 	}
 
-	// === Quoted Executable Names ===
+	// === Stage #QJ0: Quoted Executable Names ===
 
 	@Test
+	@Tag("QJ0")
 	void get_singleQuotedCommandName_parsesCorrectly() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my program' arg1");
 
@@ -455,6 +456,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("QJ0")
 	void get_doubleQuotedCommandName_parsesCorrectly() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("\"exe with spaces\" file.txt");
 
@@ -463,6 +465,48 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("QJ0")
+	void get_quotedCommandNameWithMultipleSpaces_parsesCorrectly() {
+		// Challenge test: 'exe  with  space' /tmp/fox/f1
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'exe  with  space' /tmp/fox/f1");
+
+		assertEquals("exe  with  space", result.mainCommandStr());
+		assertEquals(List.of("/tmp/fox/f1"), result.args());
+	}
+
+	@Test
+	@Tag("QJ0")
+	void get_singleQuotedCommandWithDoubleQuotesInside_parsesCorrectly() {
+		// Challenge test: 'exe with "quotes"' /tmp/fox/f2
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'exe with \"quotes\"' /tmp/fox/f2");
+
+		assertEquals("exe with \"quotes\"", result.mainCommandStr());
+		assertEquals(List.of("/tmp/fox/f2"), result.args());
+	}
+
+	@Test
+	@Tag("QJ0")
+	void get_doubleQuotedCommandWithEscapedSingleQuotes_parsesCorrectly() {
+		// Challenge test: "exe with \'single quotes\'" /tmp/fox/f3
+		// Note: Inside double quotes, single quote is NOT escapable, so backslash is preserved
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("\"exe with \\'single quotes\\'\" /tmp/fox/f3");
+
+		assertEquals("exe with \\'single quotes\\'", result.mainCommandStr());
+		assertEquals(List.of("/tmp/fox/f3"), result.args());
+	}
+
+	@Test
+	@Tag("QJ0")
+	void get_singleQuotedCommandWithLiteralBackslashN_parsesCorrectly() {
+		// Challenge test: 'exe with \n newline' /tmp/fox/f4
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'exe with \\n newline' /tmp/fox/f4");
+
+		assertEquals("exe with \\n newline", result.mainCommandStr());
+		assertEquals(List.of("/tmp/fox/f4"), result.args());
+	}
+
+	@Test
+	@Tag("QJ0")
 	void get_quotedCommandNameWithMultipleArgs_parsesCorrectly() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my command' arg1 arg2 arg3");
 
@@ -471,6 +515,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("QJ0")
 	void get_quotedCommandNameOnly_noArgs() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my program'");
 
@@ -479,6 +524,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("QJ0")
 	void get_quotedCommandNameWithLeadingTrailingSpaces_parsesCorrectly() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("  'my program'  arg  ");
 
@@ -487,6 +533,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("QJ0")
 	void get_quotedCommandNameWithMultipleSpacesBetween_parsesCorrectly() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my program'     arg");
 
@@ -495,6 +542,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("QJ0")
 	void get_adjacentQuotesInCommandName_concatenates() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'prog'gram arg");
 
@@ -503,6 +551,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("QJ0")
 	void get_mixedQuotesInCommandName_concatenates() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my'\"program\" arg");
 
@@ -511,6 +560,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("QJ0")
 	void get_escapedSpaceInCommandName_createsSingleToken() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("my\\ program arg");
 
@@ -519,6 +569,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("QJ0")
 	void get_quotedCommandWithQuotedArgs_parsesCorrectly() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my program' 'arg with spaces'");
 
@@ -527,6 +578,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("QJ0")
 	void get_quotedCommandWithBackslashInDoubleQuotes_parsesCorrectly() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("\"my\\program\" arg");
 
@@ -535,6 +587,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
+	@Tag("QJ0")
 	void get_unclosedQuoteInCommandName_throwsException() {
 		IllegalArgumentException exception = assertThrows(
 				IllegalArgumentException.class,

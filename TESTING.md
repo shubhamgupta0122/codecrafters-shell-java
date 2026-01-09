@@ -23,6 +23,7 @@ Tests are tagged with JUnit 5 `@Tag` annotations corresponding to CodeCrafters c
 
 | Stage | Description | Test Class | Test Count |
 |-------|-------------|------------|------------|
+| `QJ0` | Quoting - Executing a quoted executable | `CommandExtractorUtilsTest` | 16 |
 | `NI6` | Quoting - Single quotes | `CommandExtractorUtilsTest` | 11 |
 | `TG6` | Quoting - Double quotes | `CommandExtractorUtilsTest` | 13 |
 | `YT5` | Quoting - Backslash outside quotes | `CommandExtractorUtilsTest` | 11 |
@@ -55,19 +56,11 @@ Tests are tagged with JUnit 5 `@Tag` annotations corresponding to CodeCrafters c
 | `MG5` | Locate executable files | `TypeCommandTest` | 1 |
 | `IP1` | Run a program | `ExecutableCommandTest` | 3 |
 
-### Additional Tests
+### Other Stages
 
-**Quoted Executable Names** (`CommandExtractorUtilsTest`): 12 tests
-
-Tests for parsing executable names with quotes and special characters:
-- Single-quoted command names: `'my program' arg`
-- Double-quoted command names: `"exe with spaces" file`
-- Adjacent quotes concatenation: `'prog'gram`
-- Mixed quotes: `'my'"program"`
-- Escaped spaces in command names: `my\ program`
-- Edge cases: leading/trailing spaces, multiple spaces, unclosed quotes
-
-These tests ensure the parser correctly handles quoted executable names, supporting commands that contain spaces or special characters.
+| Stage | Description | Notes |
+|-------|-------------|-------|
+| `OO8` | Print a prompt | Trivial - REPL always prints `$` prompt |
 
 ## Test Files Overview
 
