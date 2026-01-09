@@ -58,6 +58,31 @@ public class CommandExtractorUtils {
 	) { }
 
 	/**
+	 * Represents the parsing state while processing command arguments.
+	 *
+	 * <p>The parser operates as a state machine with the following states:
+	 * <ul>
+	 *   <li>{@link #NORMAL} - Default state, outside any quotes</li>
+	 *   <li>{@link #SINGLE_QUOTED} - Inside single quotes, all characters are literal</li>
+	 *   <li>{@link #DOUBLE_QUOTED} - Inside double quotes, all characters are literal</li>
+	 *   <li>{@link #ESCAPING} - Next character will be escaped (treated literally)</li>
+	 * </ul>
+	 */
+	private enum ParserState {
+		/** Normal parsing mode, outside of any quotes. */
+		NORMAL,
+
+		/** Inside single quotes; all characters (including whitespace) are treated literally. */
+		SINGLE_QUOTED,
+
+		/** Inside double quotes; all characters (including whitespace) are treated literally. */
+		DOUBLE_QUOTED,
+
+		/** Next character will be escaped and treated literally. */
+		ESCAPING
+	}
+
+	/**
 	 * Extracts the command name and arguments from an input string.
 	 *
 	 * <p>Leading and trailing whitespace is stripped before parsing.
@@ -105,49 +130,66 @@ public class CommandExtractorUtils {
 	 */
 	private static List<String> normalizeCommandArgs(String commandArgsStr) {
 		List<StringBuilder> builders = new ArrayList<>();
-		boolean sQuoting = false;
-		boolean dQuoting = false;
-		boolean escaping = false;
+		ParserState state = ParserState.NORMAL;
 
 		for (char c : commandArgsStr.toCharArray()) {
-			if(escaping) {
-				escaping = false;
-				addCharToLastArg(c, builders);
-				continue;
-			} else if(!sQuoting && !dQuoting && c == BACKSLASH) {
-				escaping = true;
-				continue;
-			}
-
-			if(!sQuoting && c == DOUBLE_QUOTE) {
-				dQuoting = !dQuoting;
-				continue;
-			}
-
-			if(!dQuoting && c == SINGLE_QUOTE) {
-				sQuoting = !sQuoting;
-				continue;
-			}
-
-			if(dQuoting || sQuoting) {
-				addCharToLastArg(c, builders);
-			} else {
-				if(c == WHITESPACE) {
-					if(!hasLastElementAsEmpty(builders))
-						builders.add(new StringBuilder());
-				} else {
+			state = switch (state) {
+				case ESCAPING -> {
+					// Escaped character: add it literally and return to NORMAL
 					addCharToLastArg(c, builders);
+					yield ParserState.NORMAL;
 				}
-			}
+
+				case NORMAL -> {
+					if (c == BACKSLASH) {
+						yield ParserState.ESCAPING;
+					} else if (c == SINGLE_QUOTE) {
+						yield ParserState.SINGLE_QUOTED;
+					} else if (c == DOUBLE_QUOTE) {
+						yield ParserState.DOUBLE_QUOTED;
+					} else if (c == WHITESPACE) {
+						if (!hasLastElementAsEmpty(builders)) {
+							builders.add(new StringBuilder());
+						}
+						yield ParserState.NORMAL;
+					} else {
+						addCharToLastArg(c, builders);
+						yield ParserState.NORMAL;
+					}
+				}
+
+				case SINGLE_QUOTED -> {
+					if (c == SINGLE_QUOTE) {
+						// Close single quote
+						yield ParserState.NORMAL;
+					} else {
+						// Inside single quotes: all chars are literal
+						addCharToLastArg(c, builders);
+						yield ParserState.SINGLE_QUOTED;
+					}
+				}
+
+				case DOUBLE_QUOTED -> {
+					if (c == DOUBLE_QUOTE) {
+						// Close double quote
+						yield ParserState.NORMAL;
+					} else {
+						// Inside double quotes: all chars are literal
+						addCharToLastArg(c, builders);
+						yield ParserState.DOUBLE_QUOTED;
+					}
+				}
+			};
 		}
 
-		// Validate that all quotes are closed
-		if (sQuoting || dQuoting) {
+		// Validate that we ended in a valid state
+		if (!(state == ParserState.NORMAL || state == ParserState.ESCAPING)) {
 			throw new IllegalArgumentException("Unclosed quote in input");
 		}
 
-		if(hasLastElementAsEmpty(builders))
+		if (hasLastElementAsEmpty(builders)) {
 			builders.removeLast();
+		}
 
 		return builders.stream()
 				.map(StringBuilder::toString)
