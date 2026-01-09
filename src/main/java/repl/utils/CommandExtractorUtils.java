@@ -96,8 +96,12 @@ public class CommandExtractorUtils {
 	 *
 	 * <p>Uses StringBuilder for efficient string building during parsing.
 	 *
+	 * <p>Validates that all quotes are properly closed. Unclosed quotes will result
+	 * in an IllegalArgumentException being thrown.
+	 *
 	 * @param commandArgsStr the arguments portion of the input (after command name)
 	 * @return list of parsed arguments
+	 * @throws IllegalArgumentException if the input contains unclosed quotes
 	 */
 	private static List<String> normalizeCommandArgs(String commandArgsStr) {
 		List<StringBuilder> builders = new ArrayList<>();
@@ -136,6 +140,12 @@ public class CommandExtractorUtils {
 				}
 			}
 		}
+
+		// Validate that all quotes are closed
+		if (sQuoting || dQuoting) {
+			throw new IllegalArgumentException("Unclosed quote in input");
+		}
+
 		if(hasLastElementAsEmpty(builders))
 			builders.removeLast();
 

@@ -255,12 +255,21 @@ echo 'hello'"world"       → args: ["helloworld"]       # concatenated
 
 ### Executable Discovery (ExecutableUtils.java)
 
-**PATH Searching:**
+**PATH Searching with Two-Level Caching:**
 - Splits `System.getenv("PATH")` using platform-specific separator (`File.pathSeparator`)
 - Handles missing or empty PATH gracefully (returns empty array)
-- For each directory: Uses `Files.list()` to find matching filename
+- Implements two-level caching for optimal performance:
+  - **Command cache**: Maps command names → resolved paths (O(1) lookup)
+  - **Directory listing cache**: Caches scanned directories to avoid repeated filesystem I/O
+- For each directory: Checks cached listings first, scans only on cache miss
 - Verification: `Files.isExecutable()` check
 - Returns: First match or null
+- Thread-safe using `ConcurrentHashMap` for concurrent access
+
+**Performance:**
+- First lookup: Scans directories once, caches results
+- Subsequent lookups: O(1) hash map lookup (no filesystem access)
+- Significant improvement for repeated command executions
 
 **Platform Compatibility:**
 - Uses `File.pathSeparator` for cross-platform support (`:` on Unix, `;` on Windows)

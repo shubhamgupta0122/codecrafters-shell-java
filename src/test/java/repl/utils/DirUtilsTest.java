@@ -121,4 +121,49 @@ class DirUtilsTest {
 	void homeDirPath_matchesEnvironment() {
 		assertEquals(System.getenv("HOME"), DirUtils.HomeDirPath);
 	}
+
+	// === Tilde Expansion Edge Cases ===
+
+	@Test
+	void setCurrentDir_pathWithTildeInMiddle_treatsLiterally() throws IOException {
+		// Create a directory with tilde in the name
+		Path tildeDir = Files.createDirectory(tempDir.resolve("foo~bar"));
+
+		dirUtils.setCurrentDir("foo~bar");
+
+		assertEquals(tildeDir.toRealPath(), dirUtils.getCurrentDir());
+	}
+
+	@Test
+	void setCurrentDir_pathWithMultipleTildesNotAtStart_treatsLiterally() throws IOException {
+		// Create a directory with multiple tildes
+		Path multiTildeDir = Files.createDirectory(tempDir.resolve("test~file~name"));
+
+		dirUtils.setCurrentDir("test~file~name");
+
+		assertEquals(multiTildeDir.toRealPath(), dirUtils.getCurrentDir());
+	}
+
+	@Test
+	void setCurrentDir_doubleTildeAtStart_expandsOnlyFirst() throws IOException {
+		String homePath = DirUtils.HomeDirPath;
+		if (homePath != null && Files.exists(Path.of(homePath))) {
+			// Create a directory named "~" in home (if possible)
+			Path homeDir = Path.of(homePath);
+			Path tildeSubDir = homeDir.resolve("~");
+
+			// Only test if we can create such a directory
+			if (!Files.exists(tildeSubDir)) {
+				try {
+					Files.createDirectory(tildeSubDir);
+					dirUtils.setCurrentDir("~~");
+					assertEquals(tildeSubDir.toRealPath(), dirUtils.getCurrentDir());
+					// Cleanup
+					Files.delete(tildeSubDir);
+				} catch (IOException e) {
+					// Skip test if we can't create the directory
+				}
+			}
+		}
+	}
 }

@@ -30,9 +30,14 @@ public class REPL {
 
 	/**
 	 * Creates a new REPL instance with default shared services.
+	 *
+	 * <p>Redirects stderr to stdout to ensure error messages and prompts appear
+	 * in the correct order without requiring timing delays or sleep calls.
 	 */
 	public REPL() {
 		this(new DirUtils());
+		// Redirect stderr to stdout to ensure proper ordering without timing dependencies
+		System.setErr(System.out);
 	}
 
 	/**
@@ -54,7 +59,9 @@ public class REPL {
 	 *
 	 * <p>Flow: read → eval → print → loop (repeat)
 	 *
-	 * @throws RuntimeException if a non-exit ReplException occurs
+	 * <p>Errors are caught and printed to stderr (which is redirected to stdout
+	 * during REPL construction to ensure proper ordering). The shell continues
+	 * running after errors.
 	 */
 	@SuppressWarnings("InfiniteRecursion")
 	public void loop() {
@@ -65,8 +72,9 @@ public class REPL {
 			print(output);
 			loop();
 		} catch (GracefulExitException _) {
-		} catch (ReplException e) {
-			System.err.println(e.getMessage());
+		} catch (ReplException | RuntimeException e) {
+			// Print error to stderr (redirected to stdout for proper ordering)
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			loop();
 		}
 	}

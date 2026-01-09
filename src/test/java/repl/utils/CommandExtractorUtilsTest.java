@@ -314,4 +314,66 @@ class CommandExtractorUtilsTest {
 		assertEquals("echo", result.mainCommandStr());
 		assertEquals(List.of("hello"), result.args());
 	}
+
+	// === Quote Validation Tests ===
+
+	@Test
+	void get_unclosedSingleQuote_throwsIllegalArgumentException() {
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> CommandExtractorUtils.get("echo 'hello")
+		);
+
+		assertEquals("Unclosed quote in input", exception.getMessage());
+	}
+
+	@Test
+	void get_unclosedDoubleQuote_throwsIllegalArgumentException() {
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> CommandExtractorUtils.get("echo \"hello")
+		);
+
+		assertEquals("Unclosed quote in input", exception.getMessage());
+	}
+
+	@Test
+	void get_unclosedSingleQuoteWithMultipleArgs_throwsIllegalArgumentException() {
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> CommandExtractorUtils.get("echo hello 'world")
+		);
+
+		assertEquals("Unclosed quote in input", exception.getMessage());
+	}
+
+	@Test
+	void get_unclosedDoubleQuoteWithMultipleArgs_throwsIllegalArgumentException() {
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> CommandExtractorUtils.get("echo hello \"world")
+		);
+
+		assertEquals("Unclosed quote in input", exception.getMessage());
+	}
+
+	@Test
+	void get_unclosedSingleQuoteAtEnd_throwsIllegalArgumentException() {
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> CommandExtractorUtils.get("echo hello world '")
+		);
+
+		assertEquals("Unclosed quote in input", exception.getMessage());
+	}
+
+	@Test
+	void get_unclosedDoubleQuoteAtEnd_throwsIllegalArgumentException() {
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> CommandExtractorUtils.get("echo hello world \"")
+		);
+
+		assertEquals("Unclosed quote in input", exception.getMessage());
+	}
 }

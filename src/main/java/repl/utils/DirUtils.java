@@ -62,13 +62,19 @@ public class DirUtils {
 	 * are resolved against the current directory. The path is validated
 	 * and converted to a real path (resolving symlinks).
 	 *
+	 * <p>Tilde expansion only occurs when '~' appears at the start of the path.
+	 * For example, "~/documents" expands to "/home/user/documents", but
+	 * "foo~bar" is treated literally.
+	 *
 	 * @param pathStr the path to change to (absolute, relative, or with ~)
 	 * @throws IOException if the path doesn't exist or cannot be accessed
 	 */
 	public void setCurrentDir(String pathStr) throws IOException {
-		if(pathStr.startsWith(HomeDirTilde))
-			setCurrentDir(pathStr.replace(HomeDirTilde, HomeDirPath));
-		else
+		if(pathStr.startsWith(HomeDirTilde)) {
+			String expandedPath = HomeDirPath + pathStr.substring(1);
+			setCurrentDir(expandedPath);
+		} else {
 			currentDir = currentDir.resolve(pathStr).toRealPath();
+		}
 	}
 }
