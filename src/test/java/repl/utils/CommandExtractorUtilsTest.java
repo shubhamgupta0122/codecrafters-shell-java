@@ -112,6 +112,15 @@ class CommandExtractorUtilsTest {
 		assertEquals(List.of("$HOME ~/*.txt"), result.args());
 	}
 
+	@Test
+	@Tag("NI6")
+	void get_doubleQuoteInsideSingleQuotes_treatedLiterally() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo '\"hello\"'");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("\"hello\""), result.args());
+	}
+
 	// === Stage #TG6: Quoting - Double quotes ===
 
 	@Test
@@ -210,6 +219,24 @@ class CommandExtractorUtilsTest {
 		assertEquals(List.of("helloworld"), result.args());
 	}
 
+	@Test
+	@Tag("TG6")
+	void get_backslashInsideDoubleQuotes_treatedLiterally() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello\\world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello\\world"), result.args());
+	}
+
+	@Test
+	@Tag("TG6")
+	void get_multipleBackslashesInsideDoubleQuotes_treatedLiterally() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"test\\\\case\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("test\\\\case"), result.args());
+	}
+
 	// === Stage #YT5: Quoting - Backslash outside quotes ===
 
 	@Test
@@ -287,6 +314,34 @@ class CommandExtractorUtilsTest {
 
 		assertEquals("echo", result.mainCommandStr());
 		assertEquals(List.of("hello world"), result.args());
+	}
+
+	@Test
+	@Tag("YT5")
+	void get_backslashInsideSingleQuotes_treatedLiterally() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'hello\\world'");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello\\world"), result.args());
+	}
+
+	@Test
+	@Tag("YT5")
+	void get_multipleBackslashesInsideSingleQuotes_treatedLiterally() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'test\\\\case'");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("test\\\\case"), result.args());
+	}
+
+	@Test
+	@Tag("YT5")
+	void get_trailingBackslash_isIgnored() {
+		// Trailing backslash is dropped (matches bash behavior)
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello\\");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello"), result.args());
 	}
 
 	// === General parsing tests ===
