@@ -1,6 +1,7 @@
 package repl;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import repl.exceptions.GracefulExitException;
@@ -97,6 +98,8 @@ class ReplEvaluatorTest {
 	}
 
 	@Test
+	@Tag("FF0")
+	@Tag("CZ2")
 	void eval_unknownCommand_returnsNotFound() throws ReplException {
 		ReplEvaluator evaluator = new ReplEvaluator("unknowncmd123", contextBuilder);
 

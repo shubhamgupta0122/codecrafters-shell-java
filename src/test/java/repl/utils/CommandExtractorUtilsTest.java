@@ -221,6 +221,7 @@ class CommandExtractorUtilsTest {
 
 	@Test
 	@Tag("TG6")
+	@Tag("GU3")
 	void get_backslashInsideDoubleQuotes_preservedForNonEscapableChars() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello\\world\"");
 
@@ -230,11 +231,22 @@ class CommandExtractorUtilsTest {
 
 	@Test
 	@Tag("TG6")
+	@Tag("GU3")
 	void get_multipleBackslashesInsideDoubleQuotes_escapesBackslash() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"test\\\\case\"");
 
 		assertEquals("echo", result.mainCommandStr());
 		assertEquals(List.of("test\\case"), result.args());
+	}
+
+	@Test
+	@Tag("TG6")
+	@Tag("GU3")
+	void get_escapedDoubleQuoteInsideDoubleQuotes_treatedAsLiteral() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"say \\\"hello\\\" world\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("say \"hello\" world"), result.args());
 	}
 
 	// === Stage #YT5: Quoting - Backslash outside quotes ===
@@ -317,7 +329,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
-	@Tag("YT5")
+	@Tag("LE5")
 	void get_backslashInsideSingleQuotes_treatedLiterally() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'hello\\world'");
 
@@ -326,7 +338,7 @@ class CommandExtractorUtilsTest {
 	}
 
 	@Test
-	@Tag("YT5")
+	@Tag("LE5")
 	void get_multipleBackslashesInsideSingleQuotes_treatedLiterally() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo 'test\\\\case'");
 

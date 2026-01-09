@@ -23,9 +23,11 @@ Tests are tagged with JUnit 5 `@Tag` annotations corresponding to CodeCrafters c
 
 | Stage | Description | Test Class | Test Count |
 |-------|-------------|------------|------------|
-| `NI6` | Quoting - Single quotes | `CommandExtractorUtilsTest` | 8 |
-| `TG6` | Quoting - Double quotes | `CommandExtractorUtilsTest` | 10 |
-| `YT5` | Quoting - Backslash outside quotes | `CommandExtractorUtilsTest` | 8 |
+| `NI6` | Quoting - Single quotes | `CommandExtractorUtilsTest` | 11 |
+| `TG6` | Quoting - Double quotes | `CommandExtractorUtilsTest` | 13 |
+| `YT5` | Quoting - Backslash outside quotes | `CommandExtractorUtilsTest` | 11 |
+| `GU3` | Quoting - Backslash within double quotes | `CommandExtractorUtilsTest` | 3 |
+| `LE5` | Quoting - Backslash within single quotes | `CommandExtractorUtilsTest` | 2 |
 
 ### Navigation Stages
 
@@ -40,10 +42,11 @@ Tests are tagged with JUnit 5 `@Tag` annotations corresponding to CodeCrafters c
 
 | Stage | Description | Test Class | Test Count |
 |-------|-------------|------------|------------|
+| `FF0` | Implement a REPL | `ReplEvaluatorTest` | 1 |
 | `IZ3` | Implement echo | `EchoCommandTest` | 4 |
 | `PN5` | Implement exit | `ExitCommandTest` | 1 |
 | `EZ5` | Implement type | `TypeCommandTest` | 4 |
-| `CZ2` | Handle invalid commands | `BadCommandTest` | 2 |
+| `CZ2` | Handle invalid commands | `BadCommandTest`, `ReplEvaluatorTest` | 3 |
 
 ### Executable Stages
 
