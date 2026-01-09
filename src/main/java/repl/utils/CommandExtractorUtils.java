@@ -11,6 +11,13 @@ import static repl.Constants.*;
  * <p>Provides functionality to split a raw command line into a main command
  * and its arguments, properly handling whitespace, quoted strings, and escape characters.
  *
+ * <p><strong>Supports quoted executable names:</strong>
+ * <ul>
+ *   <li>{@code 'my program' arg} → command: "my program", args: ["arg"]</li>
+ *   <li>{@code "exe with spaces" file} → command: "exe with spaces", args: ["file"]</li>
+ *   <li>{@code 'prog'gram arg} → command: "proggram", args: ["arg"] (concatenation)</li>
+ * </ul>
+ *
  * <p>Handles quoting and escaping according to shell semantics:
  * <ul>
  *   <li>Characters inside single quotes are treated literally (no escape sequences)</li>
@@ -101,56 +108,68 @@ public class CommandExtractorUtils {
 	 * Extracts the command name and arguments from an input string.
 	 *
 	 * <p>Leading and trailing whitespace is stripped before parsing.
-	 * Splits on the first whitespace to get the command name, then parses
-	 * the remaining string for arguments with single-quote handling.
+	 * Parses the entire input using shell quoting/escaping rules, treating
+	 * the first token as the command name and remaining tokens as arguments.
+	 *
+	 * <p>Supports quoted command names:
+	 * <pre>{@code
+	 * get("'my program' arg") → ExtractedCommand("my program", ["arg"])
+	 * get("\"exe with spaces\" file") → ExtractedCommand("exe with spaces", ["file"])
+	 * get("'prog'gram arg") → ExtractedCommand("proggram", ["arg"])
+	 * }</pre>
 	 *
 	 * @param originalInput the complete input string to parse
 	 * @return an ExtractedCommand containing the command name and parsed arguments
+	 * @throws IllegalArgumentException if the input contains unclosed quotes
 	 */
 	public static ExtractedCommand get(String originalInput) {
 		String strippedInput = originalInput.strip();
-		String mainCommandStr;
-		List<String> args;
-		int firstWhiteSpaceIndex = strippedInput.indexOf(WHITESPACE);
-		if(firstWhiteSpaceIndex == -1) {
-			mainCommandStr = strippedInput;
-			args = new ArrayList<>();
-		} else {
-			mainCommandStr = strippedInput.substring(0, firstWhiteSpaceIndex);
-			String commandArgsStr = strippedInput.substring(firstWhiteSpaceIndex + 1);
-			args = normalizeCommandArgs(commandArgsStr);
+
+		// Handle empty input
+		if (strippedInput.isEmpty()) {
+			return new ExtractedCommand("", new ArrayList<>());
 		}
+
+		// Parse entire input into tokens using state machine
+		List<String> tokens = parseTokens(strippedInput);
+
+		// Handle case where parsing produces no tokens
+		if (tokens.isEmpty()) {
+			return new ExtractedCommand("", new ArrayList<>());
+		}
+
+		// First token is command, remaining are arguments
+		String mainCommandStr = tokens.get(0);
+		List<String> args = tokens.size() > 1
+				? new ArrayList<>(tokens.subList(1, tokens.size()))
+				: new ArrayList<>();
+
 		return new ExtractedCommand(mainCommandStr, args);
 	}
 
 	/**
-	 * Parses a command arguments string into a list of individual arguments.
+	 * Parses input string into tokens using shell quoting/escaping rules.
 	 *
-	 * <p>Uses a state machine to handle quoting and escaping:
+	 * <p>This is the core parsing engine that handles:
 	 * <ul>
-	 *   <li>Outside quotes: whitespace delimits arguments, backslash escapes the next character</li>
-	 *   <li>Inside single quotes: all characters (including whitespace) are literal, no escaping</li>
-	 *   <li>Inside double quotes: most characters are literal, backslash only escapes specific chars</li>
-	 *   <li>Escape character ({@code \}): outside quotes, escapes any char; inside double quotes, only escapes: {@code "}, {@code \}, {@code $}, {@code `}, {@code \n}</li>
+	 *   <li>Single quotes (literal strings)</li>
+	 *   <li>Double quotes (with selective escaping)</li>
+	 *   <li>Backslash escaping</li>
+	 *   <li>Adjacent quote concatenation</li>
+	 *   <li>Whitespace tokenization</li>
 	 * </ul>
 	 *
-	 * <p>Uses StringBuilder for efficient string building during parsing.
-	 *
-	 * <p>Validates that all quotes are properly closed. Unclosed quotes will result
-	 * in an IllegalArgumentException being thrown.
-	 *
-	 * @param commandArgsStr the arguments portion of the input (after command name)
-	 * @return list of parsed arguments
-	 * @throws IllegalArgumentException if the input contains unclosed quotes
+	 * @param input the string to parse
+	 * @return list of parsed tokens (may be empty, never null)
+	 * @throws IllegalArgumentException if input contains unclosed quotes
 	 */
-	private static List<String> normalizeCommandArgs(String commandArgsStr) {
+	private static List<String> parseTokens(String input) {
 		List<StringBuilder> builders = new ArrayList<>();
 		ParserState state = ParserState.NORMAL;
 
-		for (char c : commandArgsStr.toCharArray()) {
+		for (char c : input.toCharArray()) {
 			state = switch (state) {
 				case ESCAPING -> {
-					// Escaped character: add it literally and return to NORMAL
 					addCharToLastArg(c, builders);
 					yield ParserState.NORMAL;
 				}
@@ -183,10 +202,8 @@ public class CommandExtractorUtils {
 
 				case SINGLE_QUOTED -> {
 					if (c == SINGLE_QUOTE) {
-						// Close single quote
 						yield ParserState.NORMAL;
 					} else {
-						// Inside single quotes: all chars are literal
 						addCharToLastArg(c, builders);
 						yield ParserState.SINGLE_QUOTED;
 					}
@@ -194,12 +211,10 @@ public class CommandExtractorUtils {
 
 				case DOUBLE_QUOTED -> {
 					if (c == DOUBLE_QUOTE) {
-						// Close double quote
 						yield ParserState.NORMAL;
 					} else if (c == BACKSLASH) {
 						yield ParserState.ESCAPING_IN_DOUBLE_QUOTES;
 					} else {
-						// Inside double quotes: all chars are literal
 						addCharToLastArg(c, builders);
 						yield ParserState.DOUBLE_QUOTED;
 					}
@@ -207,11 +222,12 @@ public class CommandExtractorUtils {
 			};
 		}
 
-		// Validate that we ended in a valid state
+		// Validate final state
 		if (!(state == ParserState.NORMAL || state == ParserState.ESCAPING)) {
 			throw new IllegalArgumentException("Unclosed quote in input");
 		}
 
+		// Remove trailing empty token if present
 		if (hasLastElementAsEmpty(builders)) {
 			builders.removeLast();
 		}

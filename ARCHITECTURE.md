@@ -218,6 +218,18 @@ Context-based injection pattern:
 
 ### Command Parsing (CommandExtractorUtils.java)
 
+**Parsing Architecture:**
+
+The parser uses a unified token-based approach:
+1. **`parseTokens(String input)`** - Core parsing engine that processes the entire input string
+2. **`get(String input)`** - Splits result into command (first token) and arguments (remaining tokens)
+
+This architecture supports **quoted executable names**, where the command itself can contain spaces or special characters:
+```bash
+'my program' arg          → command: "my program", args: ["arg"]
+"exe with spaces" file    → command: "exe with spaces", args: ["file"]
+```
+
 **State Machine with Enum-based States:**
 - `NORMAL` - Outside any quotes
 - `SINGLE_QUOTED` - Inside single quotes
@@ -234,12 +246,18 @@ Context-based injection pattern:
 
 **Examples:**
 ```bash
+# Quoted arguments
 echo 'hello     world'    → args: ["hello     world"]  # spaces preserved
 echo hello\ world         → args: ["hello world"]      # escaped space
 echo 'hello'"world"       → args: ["helloworld"]       # concatenated
 echo "hello\3"            → args: ["hello\3"]          # '3' not escapable, backslash preserved
 echo "test\\case"         → args: ["test\case"]        # backslash escapes backslash
 echo "say \"hi\""         → args: ["say "hi""]         # backslash escapes quote
+
+# Quoted executable names
+'my program' arg          → command: "my program", args: ["arg"]
+"exe with spaces" file    → command: "exe with spaces", args: ["file"]
+'prog'gram arg            → command: "proggram", args: ["arg"]  # concatenation
 ```
 
 ---

@@ -443,4 +443,104 @@ class CommandExtractorUtilsTest {
 
 		assertEquals("Unclosed quote in input", exception.getMessage());
 	}
+
+	// === Quoted Executable Names ===
+
+	@Test
+	void get_singleQuotedCommandName_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my program' arg1");
+
+		assertEquals("my program", result.mainCommandStr());
+		assertEquals(List.of("arg1"), result.args());
+	}
+
+	@Test
+	void get_doubleQuotedCommandName_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("\"exe with spaces\" file.txt");
+
+		assertEquals("exe with spaces", result.mainCommandStr());
+		assertEquals(List.of("file.txt"), result.args());
+	}
+
+	@Test
+	void get_quotedCommandNameWithMultipleArgs_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my command' arg1 arg2 arg3");
+
+		assertEquals("my command", result.mainCommandStr());
+		assertEquals(List.of("arg1", "arg2", "arg3"), result.args());
+	}
+
+	@Test
+	void get_quotedCommandNameOnly_noArgs() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my program'");
+
+		assertEquals("my program", result.mainCommandStr());
+		assertTrue(result.args().isEmpty());
+	}
+
+	@Test
+	void get_quotedCommandNameWithLeadingTrailingSpaces_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("  'my program'  arg  ");
+
+		assertEquals("my program", result.mainCommandStr());
+		assertEquals(List.of("arg"), result.args());
+	}
+
+	@Test
+	void get_quotedCommandNameWithMultipleSpacesBetween_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my program'     arg");
+
+		assertEquals("my program", result.mainCommandStr());
+		assertEquals(List.of("arg"), result.args());
+	}
+
+	@Test
+	void get_adjacentQuotesInCommandName_concatenates() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'prog'gram arg");
+
+		assertEquals("proggram", result.mainCommandStr());
+		assertEquals(List.of("arg"), result.args());
+	}
+
+	@Test
+	void get_mixedQuotesInCommandName_concatenates() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my'\"program\" arg");
+
+		assertEquals("myprogram", result.mainCommandStr());
+		assertEquals(List.of("arg"), result.args());
+	}
+
+	@Test
+	void get_escapedSpaceInCommandName_createsSingleToken() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("my\\ program arg");
+
+		assertEquals("my program", result.mainCommandStr());
+		assertEquals(List.of("arg"), result.args());
+	}
+
+	@Test
+	void get_quotedCommandWithQuotedArgs_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("'my program' 'arg with spaces'");
+
+		assertEquals("my program", result.mainCommandStr());
+		assertEquals(List.of("arg with spaces"), result.args());
+	}
+
+	@Test
+	void get_quotedCommandWithBackslashInDoubleQuotes_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("\"my\\program\" arg");
+
+		assertEquals("my\\program", result.mainCommandStr());
+		assertEquals(List.of("arg"), result.args());
+	}
+
+	@Test
+	void get_unclosedQuoteInCommandName_throwsException() {
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> CommandExtractorUtils.get("'my program arg")
+		);
+
+		assertEquals("Unclosed quote in input", exception.getMessage());
+	}
 }

@@ -13,8 +13,9 @@ This project is a Java implementation of a basic POSIX-compliant shell, develope
     *   `type`: Displays the type of command (built-in or executable).
 *   **External Command Execution:** Finds and executes commands from the system's `PATH`.
 *   **Quoting and Escaping:**
+    *   **Quoted executable names:** Command names can be quoted (e.g., `'my program' arg` or `"exe with spaces" file`)
     *   Single quotes (`'...'`): Preserves literal text including spaces.
-    *   Double quotes (`"..."`): Preserves literal text including spaces.
+    *   Double quotes (`"..."`): Preserves literal text including spaces, with selective backslash escaping.
     *   Escape character (`\`): Escapes the next character outside quotes.
 *   **Cross-Platform Support:** Compatible with Unix, Linux, macOS, and Windows.
 

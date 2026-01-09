@@ -55,11 +55,25 @@ Tests are tagged with JUnit 5 `@Tag` annotations corresponding to CodeCrafters c
 | `MG5` | Locate executable files | `TypeCommandTest` | 1 |
 | `IP1` | Run a program | `ExecutableCommandTest` | 3 |
 
+### Additional Tests
+
+**Quoted Executable Names** (`CommandExtractorUtilsTest`): 12 tests
+
+Tests for parsing executable names with quotes and special characters:
+- Single-quoted command names: `'my program' arg`
+- Double-quoted command names: `"exe with spaces" file`
+- Adjacent quotes concatenation: `'prog'gram`
+- Mixed quotes: `'my'"program"`
+- Escaped spaces in command names: `my\ program`
+- Edge cases: leading/trailing spaces, multiple spaces, unclosed quotes
+
+These tests ensure the parser correctly handles quoted executable names, supporting commands that contain spaces or special characters.
+
 ## Test Files Overview
 
 | Test File | Package | Description |
 |-----------|---------|-------------|
-| `CommandExtractorUtilsTest` | `repl.utils` | Command parsing, quoting, escaping |
+| `CommandExtractorUtilsTest` | `repl.utils` | Command parsing, quoting, escaping, quoted executable names |
 | `DirUtilsTest` | `repl.utils` | Directory operations, path resolution |
 | `EchoCommandTest` | `repl.commands.builtin` | Echo command behavior |
 | `ExitCommandTest` | `repl.commands.builtin` | Exit command behavior |
