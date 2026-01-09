@@ -1,5 +1,6 @@
 package repl.utils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -16,9 +17,26 @@ public class ExecutableUtils {
 	/**
 	 * Array of directory paths from the PATH environment variable.
 	 *
-	 * <p>Initialized by splitting PATH on colons.
+	 * <p>Initialized by splitting PATH using platform-specific separator.
+	 * Handles missing PATH gracefully by returning empty array.
 	 */
-	public static final String[] ENV_PATHS = System.getenv("PATH").split(":");
+	public static final String[] ENV_PATHS = initEnvPaths();
+
+	/**
+	 * Initializes the PATH environment variable array.
+	 *
+	 * <p>Uses platform-specific path separator (colon on Unix, semicolon on Windows).
+	 * Returns empty array if PATH is not set or is empty.
+	 *
+	 * @return array of PATH directory strings
+	 */
+	private static String[] initEnvPaths() {
+		String pathEnv = System.getenv("PATH");
+		if (pathEnv == null || pathEnv.isEmpty()) {
+			return new String[0];
+		}
+		return pathEnv.split(File.pathSeparator);
+	}
 
 	/**
 	 * Searches PATH directories for an executable with the given name.

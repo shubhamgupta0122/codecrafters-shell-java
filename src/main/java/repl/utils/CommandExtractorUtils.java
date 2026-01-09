@@ -94,11 +94,13 @@ public class CommandExtractorUtils {
 	 *   <li>Escape character ({@code \}): outside quotes, causes the next character to be treated literally</li>
 	 * </ul>
 	 *
+	 * <p>Uses StringBuilder for efficient string building during parsing.
+	 *
 	 * @param commandArgsStr the arguments portion of the input (after command name)
 	 * @return list of parsed arguments
 	 */
 	private static List<String> normalizeCommandArgs(String commandArgsStr) {
-		List<String> normalizedCommandArgs = new ArrayList<>();
+		List<StringBuilder> builders = new ArrayList<>();
 		boolean sQuoting = false;
 		boolean dQuoting = false;
 		boolean escaping = false;
@@ -106,7 +108,7 @@ public class CommandExtractorUtils {
 		for (char c : commandArgsStr.toCharArray()) {
 			if(escaping) {
 				escaping = false;
-				addCharToLastArg(c, normalizedCommandArgs);
+				addCharToLastArg(c, builders);
 				continue;
 			} else if(!sQuoting && !dQuoting && c == BACKSLASH) {
 				escaping = true;
@@ -124,34 +126,32 @@ public class CommandExtractorUtils {
 			}
 
 			if(dQuoting || sQuoting) {
-				addCharToLastArg(c, normalizedCommandArgs);
+				addCharToLastArg(c, builders);
 			} else {
 				if(c == WHITESPACE) {
-					if(!hasLastElementAsEmptyString(normalizedCommandArgs))
-						normalizedCommandArgs.add("");
+					if(!hasLastElementAsEmpty(builders))
+						builders.add(new StringBuilder());
 				} else {
-					addCharToLastArg(c, normalizedCommandArgs);
+					addCharToLastArg(c, builders);
 				}
 			}
 		}
-		if(hasLastElementAsEmptyString(normalizedCommandArgs))
-			normalizedCommandArgs.removeLast();
-		return normalizedCommandArgs;
+		if(hasLastElementAsEmpty(builders))
+			builders.removeLast();
+
+		return builders.stream()
+				.map(StringBuilder::toString)
+				.toList();
 	}
 
-	private static void addCharToLastArg(char c, List<String> normalizedCommandArgs) {
-		String lastArg = normalizedCommandArgs.isEmpty() ? "" : normalizedCommandArgs.getLast();
-		lastArg = lastArg + c;
-		removeLastIfPresent(normalizedCommandArgs);
-		normalizedCommandArgs.add(lastArg);
+	private static void addCharToLastArg(char c, List<StringBuilder> builders) {
+		if (builders.isEmpty()) {
+			builders.add(new StringBuilder());
+		}
+		builders.getLast().append(c);
 	}
 
-	private static boolean hasLastElementAsEmptyString(List<String> normalizedCommandArgs) {
-		return !normalizedCommandArgs.isEmpty() && normalizedCommandArgs.getLast().isEmpty();
-	}
-
-	private static void removeLastIfPresent(List<String> normalizedCommandArgs) {
-		if(!normalizedCommandArgs.isEmpty())
-			normalizedCommandArgs.removeLast();
+	private static boolean hasLastElementAsEmpty(List<StringBuilder> builders) {
+		return !builders.isEmpty() && builders.getLast().isEmpty();
 	}
 }

@@ -16,6 +16,7 @@ This project is a Java implementation of a basic POSIX-compliant shell, develope
     *   Single quotes (`'...'`): Preserves literal text including spaces.
     *   Double quotes (`"..."`): Preserves literal text including spaces.
     *   Escape character (`\`): Escapes the next character outside quotes.
+*   **Cross-Platform Support:** Compatible with Unix, Linux, macOS, and Windows.
 
 ## Project Structure
 

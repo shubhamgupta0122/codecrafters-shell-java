@@ -95,4 +95,15 @@ class TypeCommandTest {
 		assertTrue(result.startsWith("ls is "));
 		assertTrue(result.contains("/ls"));
 	}
+
+	// === Input validation ===
+
+	@Test
+	void execute_noArgs_returnsErrorMessage() throws ReplException {
+		when(mockContext.getArgs()).thenReturn(List.of());
+
+		String result = typeCommand.execute(mockContext);
+
+		assertTrue(result.contains("missing operand"));
+	}
 }

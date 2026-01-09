@@ -25,6 +25,9 @@ public class REPL {
 	/** The context builder with shared services (reused across commands). */
 	private final ReplContext.Builder contextBuilder;
 
+	/** Scanner for reading user input (reused across all inputs). */
+	private final Scanner scanner = new Scanner(System.in);
+
 	/**
 	 * Creates a new REPL instance with default shared services.
 	 */
@@ -63,7 +66,8 @@ public class REPL {
 			loop();
 		} catch (GracefulExitException _) {
 		} catch (ReplException e) {
-			throw new RuntimeException(e);
+			System.err.println(e.getMessage());
+			loop();
 		}
 	}
 
@@ -102,7 +106,6 @@ public class REPL {
 	 * @return the input line as a string
 	 */
 	private String readPrompt() {
-		Scanner scanner = new Scanner(System.in);
 		return scanner.nextLine();
 	}
 

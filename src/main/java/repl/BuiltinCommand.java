@@ -4,6 +4,7 @@ import repl.commands.*;
 import repl.commands.builtin.*;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Registry of all builtin shell commands.
@@ -31,15 +32,16 @@ public class BuiltinCommand {
 	public static final String cd = "cd";
 
 	/**
-	 * Map of command names to their implementing classes.
+	 * Map of command names to their factory methods.
 	 *
-	 * <p>Used to look up and instantiate builtin commands dynamically.
+	 * <p>Used to look up and instantiate builtin commands using Supplier pattern.
+	 * Avoids reflection overhead and provides type-safe instantiation.
 	 */
-	public static final Map<String, Class<? extends Command>> allCommandMap = Map.of(
-			exit, ExitCommand.class,
-			echo, EchoCommand.class,
-			type, TypeCommand.class,
-			pwd, PwdCommand.class,
-			cd, ChangeDirCommand.class
+	public static final Map<String, Supplier<Command>> allCommandMap = Map.of(
+			exit, ExitCommand::new,
+			echo, EchoCommand::new,
+			type, TypeCommand::new,
+			pwd, PwdCommand::new,
+			cd, ChangeDirCommand::new
 	);
 }

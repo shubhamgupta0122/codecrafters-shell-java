@@ -6,8 +6,8 @@ import repl.commands.ExecutableCommand;
 import repl.exceptions.ReplException;
 import repl.utils.ExecutableUtils;
 
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 /**
  * Parses and evaluates user input to create the appropriate Command object.
@@ -58,26 +58,17 @@ public class ReplEvaluator {
 	 * Processes the parsed command and executes it.
 	 *
 	 * <p>Checks if command is builtin, then searches PATH for executable,
-	 * falling back to BadCommand if not found. Uses reflection to instantiate
-	 * builtin commands.
+	 * falling back to BadCommand if not found. Uses Supplier pattern to instantiate
+	 * builtin commands efficiently.
 	 *
 	 * @return the command execution result
 	 * @throws ReplException if command execution fails
 	 */
 	private String processCommand() throws ReplException {
-		Class<? extends Command> commandClass = BuiltinCommand.allCommandMap.get(context.getMainCommandStr());
+		Supplier<Command> factory = BuiltinCommand.allCommandMap.get(context.getMainCommandStr());
 		Command command;
-		if(commandClass != null) {
-			try {
-				command = commandClass.getDeclaredConstructor().newInstance();
-			} catch (
-					InstantiationException |
-					IllegalAccessException |
-					InvocationTargetException |
-					NoSuchMethodException e
-			) {
-				throw new RuntimeException(e);
-			}
+		if(factory != null) {
+			command = factory.get();
 		} else {
 			Path executablePath = ExecutableUtils.findExecutablePath(context.getMainCommandStr());
 			if(executablePath != null)

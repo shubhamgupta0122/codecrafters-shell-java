@@ -32,6 +32,9 @@ public class TypeCommand implements Command {
 	 */
 	@Override
 	public String execute(ReplContext context) {
+		if (context.getArgs().isEmpty()) {
+			return "type: missing operand";
+		}
 		String commandToTest = context.getArgs().getFirst();
 		if(BuiltinCommand.allCommandMap.containsKey(commandToTest)) {
 			return commandToTest + COMMAND_FOUND;
