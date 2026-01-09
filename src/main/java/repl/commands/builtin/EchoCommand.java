@@ -19,6 +19,6 @@ public class EchoCommand implements Command {
 	 * @return the arguments joined by spaces
 	 */
 	public String execute(ReplContext context) {
-		return String.join(WHITESPACE.toString(), context.getArgs());
+		return String.join(Character.toString(WHITESPACE), context.getArgs());
 	}
 }

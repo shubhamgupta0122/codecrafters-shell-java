@@ -13,11 +13,12 @@ import static repl.Constants.*;
  *
  * <p>Handles quoting and escaping according to shell semantics:
  * <ul>
- *   <li>Characters inside single or double quotes are treated literally</li>
+ *   <li>Characters inside single quotes are treated literally (no escape sequences)</li>
+ *   <li>Characters inside double quotes are treated literally, except backslash escapes</li>
  *   <li>Whitespace inside single or double quotes is preserved</li>
  *   <li>Adjacent quoted strings are concatenated into a single argument</li>
  *   <li>Empty quotes are ignored</li>
- *   <li>Backslash ({@code \}) outside quotes escapes the next character, treating it literally</li>
+ *   <li>Backslash ({@code \}) outside quotes or inside double quotes escapes the next character</li>
  * </ul>
  *
  * <p>Examples:
@@ -40,8 +41,14 @@ import static repl.Constants.*;
  * // Escaped space creates single argument
  * get("echo hello\ world") → ExtractedCommand("echo", ["hello world"])
  *
- * // Escaped backslash
+ * // Escaped backslash outside quotes
  * get("echo hello\\world") → ExtractedCommand("echo", ["hello\world"])
+ *
+ * // Backslash escapes inside double quotes
+ * get("echo "hello\world"") → ExtractedCommand("echo", ["helloworld"])
+ *
+ * // Double backslash in double quotes produces single backslash
+ * get("echo "test\\case"") → ExtractedCommand("echo", ["test\case"])
  * }</pre>
  */
 public class CommandExtractorUtils {
@@ -64,8 +71,9 @@ public class CommandExtractorUtils {
 	 * <ul>
 	 *   <li>{@link #NORMAL} - Default state, outside any quotes</li>
 	 *   <li>{@link #SINGLE_QUOTED} - Inside single quotes, all characters are literal</li>
-	 *   <li>{@link #DOUBLE_QUOTED} - Inside double quotes, all characters are literal</li>
-	 *   <li>{@link #ESCAPING} - Next character will be escaped (treated literally)</li>
+	 *   <li>{@link #DOUBLE_QUOTED} - Inside double quotes, backslash can escape characters</li>
+	 *   <li>{@link #ESCAPING} - Next character will be escaped (outside quotes)</li>
+	 *   <li>{@link #ESCAPING_IN_DOUBLE_QUOTES} - Next character will be escaped (inside double quotes)</li>
 	 * </ul>
 	 */
 	private enum ParserState {
@@ -75,11 +83,14 @@ public class CommandExtractorUtils {
 		/** Inside single quotes; all characters (including whitespace) are treated literally. */
 		SINGLE_QUOTED,
 
-		/** Inside double quotes; all characters (including whitespace) are treated literally. */
+		/** Inside double quotes; most characters are literal, but backslash escapes the next character. */
 		DOUBLE_QUOTED,
 
-		/** Next character will be escaped and treated literally. */
-		ESCAPING
+		/** Next character will be escaped and treated literally (outside quotes). */
+		ESCAPING,
+
+		/** Next character will be escaped and treated literally (inside double quotes). */
+		ESCAPING_IN_DOUBLE_QUOTES
 	}
 
 	/**
@@ -114,9 +125,9 @@ public class CommandExtractorUtils {
 	 * <p>Uses a state machine to handle quoting and escaping:
 	 * <ul>
 	 *   <li>Outside quotes: whitespace delimits arguments, backslash escapes the next character</li>
-	 *   <li>Inside single quotes: all characters (including whitespace) are literal</li>
-	 *   <li>Inside double quotes: all characters (including whitespace) are literal</li>
-	 *   <li>Escape character ({@code \}): outside quotes, causes the next character to be treated literally</li>
+	 *   <li>Inside single quotes: all characters (including whitespace) are literal, no escaping</li>
+	 *   <li>Inside double quotes: most characters are literal, but backslash escapes the next character</li>
+	 *   <li>Escape character ({@code \}): outside quotes or inside double quotes, causes the next character to be treated literally</li>
 	 * </ul>
 	 *
 	 * <p>Uses StringBuilder for efficient string building during parsing.
@@ -138,6 +149,11 @@ public class CommandExtractorUtils {
 					// Escaped character: add it literally and return to NORMAL
 					addCharToLastArg(c, builders);
 					yield ParserState.NORMAL;
+				}
+
+				case ESCAPING_IN_DOUBLE_QUOTES -> {
+					addCharToLastArg(c, builders);
+					yield ParserState.DOUBLE_QUOTED;
 				}
 
 				case NORMAL -> {
@@ -173,6 +189,8 @@ public class CommandExtractorUtils {
 					if (c == DOUBLE_QUOTE) {
 						// Close double quote
 						yield ParserState.NORMAL;
+					} else if (c == BACKSLASH) {
+						yield ParserState.ESCAPING_IN_DOUBLE_QUOTES;
 					} else {
 						// Inside double quotes: all chars are literal
 						addCharToLastArg(c, builders);

@@ -221,20 +221,20 @@ class CommandExtractorUtilsTest {
 
 	@Test
 	@Tag("TG6")
-	void get_backslashInsideDoubleQuotes_treatedLiterally() {
+	void get_backslashInsideDoubleQuotes_escapesNextChar() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello\\world\"");
 
 		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("hello\\world"), result.args());
+		assertEquals(List.of("helloworld"), result.args());
 	}
 
 	@Test
 	@Tag("TG6")
-	void get_multipleBackslashesInsideDoubleQuotes_treatedLiterally() {
+	void get_multipleBackslashesInsideDoubleQuotes_escapesBackslash() {
 		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"test\\\\case\"");
 
 		assertEquals("echo", result.mainCommandStr());
-		assertEquals(List.of("test\\\\case"), result.args());
+		assertEquals(List.of("test\\case"), result.args());
 	}
 
 	// === Stage #YT5: Quoting - Backslash outside quotes ===
