@@ -218,15 +218,16 @@ Context-based injection pattern:
 
 ### Command Parsing (CommandExtractorUtils.java)
 
-**State Machine with 3 Boolean Flags:**
-- `sQuoting` - Inside single quotes
-- `dQuoting` - Inside double quotes
-- `escaping` - After backslash (outside quotes)
+**State Machine with Enum-based States:**
+- `NORMAL` - Outside any quotes
+- `SINGLE_QUOTED` - Inside single quotes
+- `DOUBLE_QUOTED` - Inside double quotes
+- `ESCAPING` - After backslash (outside quotes)
 
 **Quoting & Escaping Semantics:**
 - **Single quotes (`'`)** - Literal string, all chars treated as-is
 - **Double quotes (`"`)** - Literal string, all chars treated as-is
-- **Backslash (`\`)** - Outside quotes, escapes the next character
+- **Backslash (`\`)** - Outside quotes or inside double quotes, escapes the next character
 - **Adjacent quoted strings** - Concatenated into single argument
 - **Empty quotes** - Ignored/removed
 
