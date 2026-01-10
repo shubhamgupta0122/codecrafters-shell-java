@@ -1,5 +1,6 @@
 package repl;
 
+import lombok.experimental.UtilityClass;
 import repl.commands.*;
 import repl.commands.builtin.*;
 
@@ -15,6 +16,7 @@ import java.util.function.Supplier;
  *
  * @see ReplEvaluator
  */
+@UtilityClass
 public class BuiltinCommand {
 	/** Command name for the exit builtin. */
 	public static final String exit = "exit";

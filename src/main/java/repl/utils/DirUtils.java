@@ -1,5 +1,10 @@
 package repl.utils;
 
+import lombok.Getter;
+import lombok.ToString;
+import lombok.experimental.FieldDefaults;
+import lombok.AccessLevel;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -12,6 +17,8 @@ import java.nio.file.Paths;
  *
  * <p>Instance-based design allows for proper test isolation.
  */
+@ToString
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class DirUtils {
 	/** The tilde character used for home directory expansion. */
 	public static final String HomeDirTilde = "~";
@@ -20,10 +27,11 @@ public class DirUtils {
 	public static final String HomeDirPath = System.getenv("HOME");
 
 	/** The directory where the shell was started. */
-	private final Path initialDir;
+	final Path initialDir;
 
 	/** The current working directory of the shell. */
-	private Path currentDir;
+	@Getter
+	Path currentDir;
 
 	/**
 	 * Creates a new DirUtils instance with the current working directory
@@ -44,15 +52,6 @@ public class DirUtils {
 	public DirUtils(Path initialDir) {
 		this.initialDir = initialDir;
 		this.currentDir = initialDir;
-	}
-
-	/**
-	 * Returns the current working directory.
-	 *
-	 * @return the current directory as a Path
-	 */
-	public Path getCurrentDir() {
-		return currentDir;
 	}
 
 	/**

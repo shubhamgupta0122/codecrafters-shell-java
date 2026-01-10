@@ -1,5 +1,10 @@
 package repl;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 import repl.utils.DirUtils;
 import repl.utils.CommandExtractorUtils;
 
@@ -31,22 +36,28 @@ import java.util.List;
  *     .build();
  * }</pre>
  */
+@ToString
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ReplContext {
 	// === Shared services (session-scoped) ===
 
 	/** The directory utilities instance for managing working directory. */
-	private final DirUtils dirUtils;
+	@Getter
+	DirUtils dirUtils;
 
 	// === Per-request data (command-scoped) ===
 
 	/** The complete original input string from the user. */
-	private final String originalInput;
+	@Getter
+	String originalInput;
 
 	/** The main command name extracted from input. */
-	private final String mainCommandStr;
+	@Getter
+	String mainCommandStr;
 
 	/** The list of arguments passed to the command. */
-	private final List<String> args;
+	@Getter
+	List<String> args;
 
 	/**
 	 * Private constructor - use {@link Builder} to create instances.
@@ -68,69 +79,22 @@ public class ReplContext {
 		return new Builder(dirUtils);
 	}
 
-	// === Getters for shared services ===
-
-	/**
-	 * Returns the directory utilities instance.
-	 *
-	 * @return the DirUtils instance for managing working directory
-	 */
-	public DirUtils getDirUtils() {
-		return dirUtils;
-	}
-
-	// === Getters for per-request data ===
-
-	/**
-	 * Returns the original input string.
-	 *
-	 * @return the complete original input from the user
-	 */
-	public String getOriginalInput() {
-		return originalInput;
-	}
-
-	/**
-	 * Returns the main command name.
-	 *
-	 * @return the command name extracted from input
-	 */
-	public String getMainCommandStr() {
-		return mainCommandStr;
-	}
-
-	/**
-	 * Returns the command arguments.
-	 *
-	 * @return the list of arguments (may be empty, never null)
-	 */
-	public List<String> getArgs() {
-		return args;
-	}
-
 	/**
 	 * Builder for creating ReplContext instances.
 	 *
 	 * <p>Initialized with shared services, then per-request data is set
 	 * via fluent methods before calling {@link #build()}.
 	 */
+	@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+	@FieldDefaults(level = AccessLevel.PRIVATE)
 	public static class Builder {
 		// Shared services (set once in constructor)
-		private final DirUtils dirUtils;
+		final DirUtils dirUtils;
 
 		// Per-request data (set via builder methods)
-		private String originalInput;
-		private String mainCommandStr;
-		private List<String> args;
-
-		/**
-		 * Creates a builder with the given shared services.
-		 *
-		 * @param dirUtils the directory utilities instance
-		 */
-		private Builder(DirUtils dirUtils) {
-			this.dirUtils = dirUtils;
-		}
+		String originalInput;
+		String mainCommandStr;
+		List<String> args;
 
 		/**
 		 * Sets the original input string.

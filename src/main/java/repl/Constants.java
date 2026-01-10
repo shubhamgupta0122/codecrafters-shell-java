@@ -1,10 +1,13 @@
 package repl;
 
+import lombok.experimental.UtilityClass;
+
 import java.util.Set;
 
 /**
  * Shared constants used throughout the REPL.
  */
+@UtilityClass
 public class Constants {
 	/** Single space character used for string splitting and joining. */
 	public static final char WHITESPACE = ' ';

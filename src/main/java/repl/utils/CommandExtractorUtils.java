@@ -1,5 +1,7 @@
 package repl.utils;
 
+import lombok.experimental.UtilityClass;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,6 +64,7 @@ import static repl.Constants.*;
  * get("echo "say \"hi\""") → ExtractedCommand("echo", ["say "hi""])
  * }</pre>
  */
+@UtilityClass
 public class CommandExtractorUtils {
 
 	/**

@@ -1,5 +1,7 @@
 package repl.utils;
 
+import lombok.experimental.UtilityClass;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,6 +26,7 @@ import java.util.stream.Stream;
  *   <li>Directory listing cache: Caches file listings for each PATH directory</li>
  * </ul>
  */
+@UtilityClass
 public class ExecutableUtils {
 	/**
 	 * Array of directory paths from the PATH environment variable.
