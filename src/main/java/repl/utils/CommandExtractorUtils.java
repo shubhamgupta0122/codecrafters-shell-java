@@ -128,54 +128,64 @@ public class CommandExtractorUtils {
 	 * @throws IllegalArgumentException if the input contains unclosed quotes
 	 */
 	public static ExtractedCommand get(String originalInput) {
-		String strippedInput = originalInput.strip();
+		List<String> tokens = parseTokens(originalInput.strip());
 
-		// Handle empty input
-		if (strippedInput.isEmpty()) {
-			return new ExtractedCommand("", new ArrayList<>(), "");
-		}
-
-		// Parse entire input into tokens using state machine
-		List<String> tokens = parseTokens(strippedInput);
-
-		// Handle case where parsing produces no tokens
 		if (tokens.isEmpty()) {
-			return new ExtractedCommand("", new ArrayList<>(), "");
+			return emptyCommand();
 		}
 
-		// First token is command, remaining are arguments
-		String mainCommandStr = tokens.getFirst();
+		String command = tokens.getFirst();
+		RedirectInfo redirectInfo = extractRedirectInfo(tokens);
 
-		if(tokens.size() == 1) {
-			return new ExtractedCommand(
-				mainCommandStr,
-				new ArrayList<>(),
-				null
-			);
+		return new ExtractedCommand(
+			command,
+			new ArrayList<>(tokens.subList(1, redirectInfo.argsEndIndex())),
+			redirectInfo.target()
+		);
+	}
+
+	/**
+	 * Creates an ExtractedCommand representing empty input.
+	 */
+	private static ExtractedCommand emptyCommand() {
+		return new ExtractedCommand("", new ArrayList<>(), null);
+	}
+
+	/**
+	 * Extracts stdout redirect information from tokens.
+	 *
+	 * @param tokens the parsed token list
+	 * @return RedirectInfo containing the args end index and redirect target (if any)
+	 * @throws IllegalArgumentException if redirect operator is not followed by exactly one token
+	 */
+	private static RedirectInfo extractRedirectInfo(List<String> tokens) {
+		if (tokens.size() == 1) {
+			return new RedirectInfo(tokens.size(), null);
 		}
 
-		int indexOfStdoutRedirect = IntStream.range(1, tokens.size())
+		int redirectIndex = IntStream.range(1, tokens.size())
 			.filter(i -> STDOUT_REDIRECT.contains(tokens.get(i)))
 			.findFirst()
 			.orElse(-1);
-		if(indexOfStdoutRedirect <0) {
-			return new ExtractedCommand(
-				mainCommandStr,
-				new ArrayList<>(tokens.subList(1, tokens.size())),
-				null
-			);
+
+		if (redirectIndex < 0) {
+			return new RedirectInfo(tokens.size(), null);
 		}
 
-		if (indexOfStdoutRedirect != tokens.size() - 2) {
+		if (redirectIndex != tokens.size() - 2) {
 			throw new IllegalArgumentException("single token expected after stdout redirection");
 		}
 
-		return new ExtractedCommand(
-			mainCommandStr,
-			new ArrayList<>(tokens.subList(1, indexOfStdoutRedirect)),
-			tokens.getLast()
-		);
+		return new RedirectInfo(redirectIndex, tokens.getLast());
 	}
+
+	/**
+	 * Internal record for redirect parsing results.
+	 *
+	 * @param argsEndIndex the index where arguments end (exclusive)
+	 * @param target the redirect target filename, or null if no redirection
+	 */
+	private record RedirectInfo(int argsEndIndex, String target) { }
 
 	/**
 	 * Parses input string into tokens using shell quoting/escaping rules.
