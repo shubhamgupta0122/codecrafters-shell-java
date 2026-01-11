@@ -596,4 +596,109 @@ class CommandExtractorUtilsTest {
 
 		assertEquals("Unclosed quote in input", exception.getMessage());
 	}
+
+	// === Stdout Redirection Tests ===
+
+	@Test
+	void get_redirectWithGreaterThan_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello > output.txt");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello"), result.args());
+		assertEquals("output.txt", result.stdoutRedirectTo());
+	}
+
+	@Test
+	void get_redirectWith1GreaterThan_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo test 1> file.txt");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("test"), result.args());
+		assertEquals("file.txt", result.stdoutRedirectTo());
+	}
+
+	@Test
+	void get_redirectWithMultipleArgs_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello world test > out.txt");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello", "world", "test"), result.args());
+		assertEquals("out.txt", result.stdoutRedirectTo());
+	}
+
+	@Test
+	void get_redirectWithNoArgs_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("pwd > output.txt");
+
+		assertEquals("pwd", result.mainCommandStr());
+		assertEquals(List.of(), result.args());
+		assertEquals("output.txt", result.stdoutRedirectTo());
+	}
+
+	@Test
+	void get_redirectWithPath_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo test > /tmp/dir/file.txt");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("test"), result.args());
+		assertEquals("/tmp/dir/file.txt", result.stdoutRedirectTo());
+	}
+
+	@Test
+	void get_redirectWithQuotedFilename_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello > \"output file.txt\"");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello"), result.args());
+		assertEquals("output file.txt", result.stdoutRedirectTo());
+	}
+
+	@Test
+	void get_redirectWithQuotedArgs_parsesCorrectly() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo \"hello world\" > out.txt");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello world"), result.args());
+		assertEquals("out.txt", result.stdoutRedirectTo());
+	}
+
+	@Test
+	void get_redirectWithMultipleTokensAfterOperator_throwsException() {
+		IllegalArgumentException exception = assertThrows(
+			IllegalArgumentException.class,
+			() -> CommandExtractorUtils.get("echo hello > file1.txt file2.txt")
+		);
+
+		assertEquals("single token expected after stdout redirection", exception.getMessage());
+	}
+
+	@Test
+	void get_redirectWithoutFilename_throwsException() {
+		IllegalArgumentException exception = assertThrows(
+			IllegalArgumentException.class,
+			() -> CommandExtractorUtils.get("echo hello >")
+		);
+
+		assertEquals("single token expected after stdout redirection", exception.getMessage());
+	}
+
+	@Test
+	void get_redirectDoesNotIncludeOperatorInArgs() {
+		// This test specifically verifies the bug fix
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo arg1 arg2 > file.txt");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("arg1", "arg2"), result.args());
+		assertFalse(result.args().contains(">"), "Args should not contain redirect operator");
+		assertEquals("file.txt", result.stdoutRedirectTo());
+	}
+
+	@Test
+	void get_noRedirect_stdoutRedirectToIsNull() {
+		CommandExtractorUtils.ExtractedCommand result = CommandExtractorUtils.get("echo hello world");
+
+		assertEquals("echo", result.mainCommandStr());
+		assertEquals(List.of("hello", "world"), result.args());
+		assertNull(result.stdoutRedirectTo());
+	}
 }

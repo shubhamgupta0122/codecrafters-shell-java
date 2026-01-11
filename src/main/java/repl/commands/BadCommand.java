@@ -14,14 +14,14 @@ public class BadCommand implements Command {
 	public static final String COMMAND_NOT_FOUND = "command not found";
 
 	/**
-	 * Executes the bad command handler, returning an error message.
+	 * Executes the bad command handler by throwing an exception.
 	 *
 	 * @param context the REPL context
-	 * @return error message indicating command was not found
-	 * @throws ReplException never thrown by this implementation
+	 * @return never returns (always throws exception)
+	 * @throws ReplException always thrown with "command not found" message
 	 */
 	@Override
 	public String execute(ReplContext context) throws ReplException {
-		return context.getMainCommandStr() + ": " + COMMAND_NOT_FOUND;
+		throw new ReplException(context.getMainCommandStr() + ": " + COMMAND_NOT_FOUND);
 	}
 }

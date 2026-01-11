@@ -6,6 +6,9 @@ import repl.commands.ExecutableCommand;
 import repl.exceptions.ReplException;
 import repl.utils.ExecutableUtils;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Supplier;
 
@@ -77,7 +80,31 @@ public class ReplEvaluator {
 				command = new BadCommand();
 		}
 
-		return command.execute(context);
+		String output = command.execute(context);
+
+		if(context.getStdoutRedirectTo() == null) {
+			return output;
+		} else {
+			redirectOutput(output, context.getStdoutRedirectTo());
+			return null;
+		}
+	}
+
+	private void redirectOutput(String output, String redirectTo) throws ReplException {
+		try {
+			// Resolve relative paths against current working directory
+			Path outputPath = context.getDirUtils().getCurrentDir().resolve(redirectTo);
+
+			// Ensure parent directories exist
+			Path parentDir = outputPath.getParent();
+			if (parentDir != null && !Files.exists(parentDir)) {
+				Files.createDirectories(parentDir);
+			}
+
+			Files.writeString(outputPath, output, StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			throw new ReplException(e);
+		}
 	}
 
 }

@@ -17,15 +17,8 @@ class ReplExceptionTest {
 
 	@Test
 	void constructor_withNullCause_allowsNull() {
-		ReplException exception = new ReplException(null);
+		ReplException exception = new ReplException((String)null);
 
 		assertNull(exception.getCause());
-	}
-
-	@Test
-	void isException_true() {
-		ReplException exception = new ReplException(null);
-
-		assertTrue(exception instanceof Exception);
 	}
 }

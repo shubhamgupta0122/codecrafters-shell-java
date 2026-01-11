@@ -1,6 +1,7 @@
 package repl.commands;
 
 import repl.ReplContext;
+import repl.exceptions.ReplException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,13 +18,16 @@ public class ExecutableCommand implements Command {
 	 * Executes the external command and captures its output.
 	 *
 	 * <p>Spawns a new process using ProcessBuilder, waits for completion, and
-	 * returns the captured output. Both stdout and stderr are merged together.
+	 * returns stdout if successful (exit code 0). If the process fails (non-zero
+	 * exit code), throws ReplException with stderr content.
 	 *
 	 * @param context the REPL context containing command and arguments
-	 * @return the captured output from the process, or error message on failure
+	 * @return the captured stdout from the process (only if exit code is 0)
+	 * @throws ReplException if the process exits with non-zero code (stderr as message)
+	 *                        or if IOException/InterruptedException occurs
 	 */
 	@Override
-	public String execute(ReplContext context) {
+	public String execute(ReplContext context) throws ReplException {
 		String mainCommandStr = context.getMainCommandStr();
 		try {
 			// Build command list
@@ -33,20 +37,27 @@ public class ExecutableCommand implements Command {
 
 			// Create and configure process
 			ProcessBuilder pb = new ProcessBuilder(command);
-			pb.redirectErrorStream(true); // Merge stderr into stdout
 
 			// Start process and capture output
 			Process process = pb.start();
-			String output = new String(process.getInputStream().readAllBytes());
+			String stdout = new String(process.getInputStream().readAllBytes());
+			String stderr = new String(process.getErrorStream().readAllBytes());
 
 			// Wait for completion
-			process.waitFor();
+			int exitCode = process.waitFor();
+
+			if(exitCode != 0) {
+				if (stderr.isBlank()) {
+					throw new ReplException(context.getMainCommandStr() + ": command failed with exit code " + exitCode);
+				} else {
+					throw new ReplException(stderr.stripTrailing());
+				}
+			}
 
 			// Strip trailing whitespace (REPL adds newline)
-			return output.stripTrailing();
-
+			return stdout.stripTrailing();
 		} catch (IOException | InterruptedException e) {
-			return mainCommandStr + ": execution failed: " + e.getMessage();
+			throw new ReplException(mainCommandStr + ": execution failed: " + e.getMessage(), e);
 		}
 	}
 

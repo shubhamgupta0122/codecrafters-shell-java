@@ -27,19 +27,21 @@ public class ChangeDirCommand implements Command {
 	 * tilde expansion for home directory paths.
 	 *
 	 * @param context the REPL context containing target path and DirUtils
-	 * @return null on success, or error message if path doesn't exist
+	 * @return null on success
+	 * @throws ReplException if the path doesn't exist (NoSuchFileException) or
+	 *                        if an I/O error occurs
 	 */
 	@Override
-	public String execute(ReplContext context) {
+	public String execute(ReplContext context) throws ReplException {
 		List<String> args = context.getArgs();
 		String requestedPath = args.isEmpty() ? DirUtils.HomeDirTilde : args.getFirst();
 		try {
 			context.getDirUtils().setCurrentDir(requestedPath);
 			return null;
-		} catch (NoSuchFileException e){
-			return BuiltinCommand.cd + ": " + e.getMessage() + NoSuchFileOrDirectory;
+		} catch (NoSuchFileException e) {
+			throw new ReplException(BuiltinCommand.cd + ": " + e.getMessage() + NoSuchFileOrDirectory, e);
 		} catch (IOException e) {
-			throw new RuntimeException(new ReplException(e));
+			throw new ReplException(e);
 		}
 	}
 }

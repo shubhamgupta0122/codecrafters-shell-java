@@ -50,14 +50,17 @@ class ChangeDirCommandTest {
 
 	@Test
 	@Tag("RA6")
-	void execute_nonExistentPath_returnsErrorMessage() throws ReplException, IOException {
+	void execute_nonExistentPath_throwsReplExceptionWithErrorMessage() throws IOException {
 		when(mockContext.getArgs()).thenReturn(List.of("nonexistent"));
 		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
 		doThrow(new NoSuchFileException("nonexistent")).when(mockDirUtils).setCurrentDir("nonexistent");
 
-		String result = cdCommand.execute(mockContext);
+		ReplException exception = assertThrows(
+			ReplException.class,
+			() -> cdCommand.execute(mockContext)
+		);
 
-		assertEquals("cd: nonexistent: No such file or directory", result);
+		assertEquals("cd: nonexistent: No such file or directory", exception.getMessage());
 	}
 
 	// === Stage #GP4: Navigation - The cd builtin: Home directory ===
@@ -94,11 +97,18 @@ class ChangeDirCommandTest {
 	// === Error handling ===
 
 	@Test
-	void execute_withIOException_throwsRuntimeException() throws IOException {
+	void execute_withIOException_throwsReplException() throws IOException {
 		when(mockContext.getArgs()).thenReturn(List.of("somepath"));
 		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
 		doThrow(new IOException("IO error")).when(mockDirUtils).setCurrentDir("somepath");
 
-		assertThrows(RuntimeException.class, () -> cdCommand.execute(mockContext));
+		ReplException exception = assertThrows(
+			ReplException.class,
+			() -> cdCommand.execute(mockContext)
+		);
+
+		// ReplException wraps the IOException
+		assertNotNull(exception.getCause());
+		assertEquals(IOException.class, exception.getCause().getClass());
 	}
 }

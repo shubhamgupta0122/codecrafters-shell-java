@@ -68,7 +68,8 @@ REPL.loop() [tail recursion]
 ├── 3. print()     → Prints output to stdout (if not null)
 └── 4. loop()      → Recursive call
                      Catches: GracefulExitException (exit normally)
-                     Catches: ReplException (convert to RuntimeException)
+                     Catches: ReplException (print error to stderr, continue loop)
+                     Catches: RuntimeException (print class+message to stderr, continue loop)
 ```
 
 **Design Choice:** Uses tail recursion with `@SuppressWarnings("InfiniteRecursion")` instead of a traditional while loop.
@@ -86,6 +87,7 @@ Two-tier context design using the **Builder pattern**:
 - `originalInput` - Raw user input
 - `mainCommandStr` - Parsed command name
 - `args` - List of parsed arguments
+- `stdoutRedirectTo` - Target file for stdout redirection (null if no redirection)
 
 **Builder Pattern Implementation:**
 ```java
@@ -109,11 +111,24 @@ Resolves and executes commands with the following priority order:
 ```java
 processCommand():
 ├── 1. Check BuiltinCommand.allCommandMap
-│   └── Found? Instantiate via reflection (getDeclaredConstructor().newInstance())
+│   └── Found? Instantiate via Supplier factory
 ├── 2. Search PATH using ExecutableUtils.findExecutablePath()
 │   └── Found? Create ExecutableCommand instance
-└── 3. Neither? Create BadCommand instance
+├── 3. Neither? Create BadCommand instance
+├── 4. Execute command → get output
+└── 5. Handle stdout redirection (if stdoutRedirectTo != null)
+    ├── Resolve path against current directory
+    ├── Create parent directories if needed
+    ├── Write output to file (overwrites existing)
+    └── Return null (suppresses console output)
 ```
+
+**Stdout Redirection Features:**
+- Supports both `>` and `1>` operators
+- Creates parent directories automatically
+- Overwrites existing files
+- Works with both builtin and external commands
+- Returns null when redirecting (no console output)
 
 ---
 
@@ -192,25 +207,29 @@ Context-based injection pattern:
 
 **ChangeDirCommand** - Changes working directory
 - Supports: Absolute paths, relative paths, home expansion (`~`)
-- Error handling: Catches `NoSuchFileException` → returns error message
+- Error handling: Catches `NoSuchFileException` → throws `ReplException` with error message
+- Throws: `ReplException` if path doesn't exist or I/O error occurs
 - Returns: `null` on success (REPL skips printing)
 
 **TypeCommand** - Identifies command type
 - Checks builtin registry then searches PATH
+- Throws: `ReplException` if no command argument provided
 - Returns: "is a shell builtin" or full path or "not found"
 
 ### External Commands
 
 **ExecutableCommand** - Spawns external processes
 - Uses `ProcessBuilder` to execute system commands
-- Merges stdout and stderr (`redirectErrorStream(true)`)
-- Captures output, strips trailing whitespace
-- Error handling: Catches IO exceptions → returns error message
+- Captures stdout and stderr separately
+- Checks process exit code after completion
+- Returns: stdout (stripped of trailing whitespace) on success (exit code 0)
+- Throws: `ReplException` with stderr content if exit code is non-zero
+- Throws: `ReplException` wrapping IOException/InterruptedException on execution failure
 
 ### Error Handler
 
 **BadCommand** - Unknown command handler
-- Returns: `"<command>: command not found"`
+- Throws: `ReplException` with message `"<command>: command not found"`
 
 ---
 
@@ -259,6 +278,25 @@ echo "say \"hi\""         → args: ["say "hi""]         # backslash escapes quo
 "exe with spaces" file    → command: "exe with spaces", args: ["file"]
 'prog'gram arg            → command: "proggram", args: ["arg"]  # concatenation
 ```
+
+**Stdout Redirection Parsing:**
+
+After tokenization, the parser identifies stdout redirection operators (`>` or `1>`) in the token list:
+- Finds the redirect operator position (must be followed by exactly one token - the target filename)
+- Splits tokens into:command (first token)
+  - Arguments (tokens between command and redirect operator)
+  - Redirect target (token after redirect operator)
+
+Examples:
+```bash
+echo hello > output.txt       → command: "echo", args: ["hello"], redirect: "output.txt"
+pwd 1> /tmp/dir.txt           → command: "pwd", args: [], redirect: "/tmp/dir.txt"
+echo "test" > dir/file.txt    → command: "echo", args: ["test"], redirect: "dir/file.txt"
+```
+
+Error handling:
+- Multiple tokens after redirect operator → throws `IllegalArgumentException`
+- Redirect operator without target → throws `IllegalArgumentException`
 
 ---
 
@@ -317,14 +355,24 @@ Exception
 ### Exception Usage
 
 **ReplException** - Base for command errors
-- Wraps underlying cause with `super(cause)`
-- Used for command-level errors
-- In REPL: Caught → converted to `RuntimeException` and propagated
+- Multiple constructors support different error scenarios:
+  - `ReplException(Throwable cause)` - Wraps underlying exception
+  - `ReplException(String message, Throwable cause)` - Custom message with cause
+  - `ReplException(String message)` - Message-only error
+- Used by all commands to signal errors
+- In REPL: Caught → message printed to stderr, loop continues
 
 **GracefulExitException** - Control flow for exit
-- Extends `ReplException` but created with `super(null)` (no cause)
+- Extends `ReplException` but created with `super((String) null)` (no message)
 - Used by ExitCommand to signal clean shutdown
 - In REPL: Caught separately → loop terminates (clean exit)
+
+**Error Handling Flow:**
+1. Command encounters error (e.g., file not found, invalid input, process failure)
+2. Command throws `ReplException` with descriptive error message
+3. REPL catches exception and prints message to stderr
+4. REPL continues loop (doesn't crash)
+5. User sees error message and can correct their input
 
 ---
 

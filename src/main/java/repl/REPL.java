@@ -72,7 +72,10 @@ public class REPL {
 			print(output);
 			loop();
 		} catch (GracefulExitException _) {
-		} catch (ReplException | RuntimeException e) {
+		} catch (ReplException e) {
+			System.err.println(e.getMessage());
+			loop();
+		} catch (RuntimeException e) {
 			// Print error to stderr (redirected to stdout for proper ordering)
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			loop();

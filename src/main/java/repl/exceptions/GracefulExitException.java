@@ -16,6 +16,6 @@ public class GracefulExitException extends ReplException {
 	 * <p>No error message is needed since this represents normal termination.
 	 */
 	public GracefulExitException() {
-		super(null);
+		super((String) null);
 	}
 }

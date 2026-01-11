@@ -100,12 +100,15 @@ class ReplEvaluatorTest {
 	@Test
 	@Tag("FF0")
 	@Tag("CZ2")
-	void eval_unknownCommand_returnsNotFound() throws ReplException {
+	void eval_unknownCommand_throwsReplExceptionWithNotFound() {
 		ReplEvaluator evaluator = new ReplEvaluator("unknowncmd123", contextBuilder);
 
-		String result = evaluator.eval();
+		ReplException exception = assertThrows(
+			ReplException.class,
+			() -> evaluator.eval()
+		);
 
-		assertEquals("unknowncmd123: command not found", result);
+		assertEquals("unknowncmd123: command not found", exception.getMessage());
 	}
 
 	@Test
@@ -115,5 +118,99 @@ class ReplEvaluatorTest {
 		String result = evaluator.eval();
 
 		assertEquals("external", result);
+	}
+
+	// === Stdout redirection tests ===
+
+	@Test
+	void eval_redirectWithGreaterThan_writesOutputToFile() throws ReplException, IOException {
+		ReplEvaluator evaluator = new ReplEvaluator("echo hello world > output.txt", contextBuilder);
+
+		String result = evaluator.eval();
+
+		// When redirecting, eval should return null
+		assertNull(result);
+
+		// Verify file was created and contains the output
+		Path outputFile = tempDir.resolve("output.txt");
+		assertTrue(Files.exists(outputFile), "Output file should exist");
+		String fileContent = Files.readString(outputFile);
+		assertEquals("hello world", fileContent);
+	}
+
+	@Test
+	void eval_redirectWith1GreaterThan_writesOutputToFile() throws ReplException, IOException {
+		ReplEvaluator evaluator = new ReplEvaluator("echo test content 1> output2.txt", contextBuilder);
+
+		String result = evaluator.eval();
+
+		assertNull(result);
+
+		Path outputFile = tempDir.resolve("output2.txt");
+		assertTrue(Files.exists(outputFile));
+		String fileContent = Files.readString(outputFile);
+		assertEquals("test content", fileContent);
+	}
+
+	@Test
+	void eval_redirectToNestedDirectory_createsDirectoriesAndFile() throws ReplException, IOException {
+		ReplEvaluator evaluator = new ReplEvaluator("echo nested output > subdir/nested/file.txt", contextBuilder);
+
+		String result = evaluator.eval();
+
+		assertNull(result);
+
+		// Verify nested directories were created
+		Path outputFile = tempDir.resolve("subdir/nested/file.txt");
+		assertTrue(Files.exists(outputFile), "Nested output file should exist");
+		assertTrue(Files.isDirectory(outputFile.getParent()), "Parent directory should exist");
+
+		String fileContent = Files.readString(outputFile);
+		assertEquals("nested output", fileContent);
+	}
+
+	@Test
+	void eval_redirectBuiltinCommand_writesOutputToFile() throws ReplException, IOException {
+		ReplEvaluator evaluator = new ReplEvaluator("pwd > pwd_output.txt", contextBuilder);
+
+		String result = evaluator.eval();
+
+		assertNull(result);
+
+		Path outputFile = tempDir.resolve("pwd_output.txt");
+		assertTrue(Files.exists(outputFile));
+		String fileContent = Files.readString(outputFile);
+		assertEquals(tempDir.toAbsolutePath().toString(), fileContent);
+	}
+
+	@Test
+	void eval_redirectOverwritesExistingFile() throws ReplException, IOException {
+		// Create a file with initial content
+		Path outputFile = tempDir.resolve("overwrite.txt");
+		Files.writeString(outputFile, "initial content");
+
+		// Redirect to the same file
+		ReplEvaluator evaluator = new ReplEvaluator("echo new content > overwrite.txt", contextBuilder);
+		String result = evaluator.eval();
+
+		assertNull(result);
+
+		// Verify the file was overwritten
+		String fileContent = Files.readString(outputFile);
+		assertEquals("new content", fileContent);
+	}
+
+	@Test
+	void eval_redirectEmptyOutput_createsEmptyFile() throws ReplException, IOException {
+		ReplEvaluator evaluator = new ReplEvaluator("echo '' > empty.txt", contextBuilder);
+
+		String result = evaluator.eval();
+
+		assertNull(result);
+
+		Path outputFile = tempDir.resolve("empty.txt");
+		assertTrue(Files.exists(outputFile));
+		String fileContent = Files.readString(outputFile);
+		assertEquals("", fileContent);
 	}
 }

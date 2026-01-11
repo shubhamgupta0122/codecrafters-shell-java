@@ -59,6 +59,9 @@ public class ReplContext {
 	@Getter
 	List<String> args;
 
+	@Getter
+	String stdoutRedirectTo;
+
 	/**
 	 * Private constructor - use {@link Builder} to create instances.
 	 */
@@ -67,6 +70,7 @@ public class ReplContext {
 		this.originalInput = builder.originalInput;
 		this.mainCommandStr = builder.mainCommandStr;
 		this.args = builder.args;
+		this.stdoutRedirectTo = builder.stdoutRedirectTo;
 	}
 
 	/**
@@ -95,6 +99,7 @@ public class ReplContext {
 		String originalInput;
 		String mainCommandStr;
 		List<String> args;
+		String stdoutRedirectTo;
 
 		/**
 		 * Sets the original input string.
@@ -116,6 +121,7 @@ public class ReplContext {
 			CommandExtractorUtils.ExtractedCommand extractedCommand = CommandExtractorUtils.get(originalInput);
 			mainCommandStr = extractedCommand.mainCommandStr();
 			args = extractedCommand.args();
+			stdoutRedirectTo = extractedCommand.stdoutRedirectTo();
 			return new ReplContext(this);
 		}
 	}

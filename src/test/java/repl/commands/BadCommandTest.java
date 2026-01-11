@@ -23,22 +23,28 @@ class BadCommandTest {
 
 	@Test
 	@Tag("CZ2")
-	void execute_returnsCommandNotFoundMessage() throws ReplException {
+	void execute_throwsReplExceptionWithCommandNotFoundMessage() {
 		when(mockContext.getMainCommandStr()).thenReturn("unknowncmd");
 
-		String result = badCommand.execute(mockContext);
+		ReplException exception = assertThrows(
+			ReplException.class,
+			() -> badCommand.execute(mockContext)
+		);
 
-		assertEquals("unknowncmd: command not found", result);
+		assertEquals("unknowncmd: command not found", exception.getMessage());
 	}
 
 	@Test
 	@Tag("CZ2")
-	void execute_withDifferentCommand_includesCommandName() throws ReplException {
+	void execute_withDifferentCommand_throwsExceptionIncludingCommandName() {
 		when(mockContext.getMainCommandStr()).thenReturn("foobar");
 
-		String result = badCommand.execute(mockContext);
+		ReplException exception = assertThrows(
+			ReplException.class,
+			() -> badCommand.execute(mockContext)
+		);
 
-		assertEquals("foobar: command not found", result);
+		assertEquals("foobar: command not found", exception.getMessage());
 	}
 
 	@Test

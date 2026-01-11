@@ -3,6 +3,7 @@ package repl.commands.builtin;
 import repl.BuiltinCommand;
 import repl.ReplContext;
 import repl.commands.Command;
+import repl.exceptions.ReplException;
 import repl.utils.ExecutableUtils;
 
 import java.nio.file.Path;
@@ -29,11 +30,12 @@ public class TypeCommand implements Command {
 	 *
 	 * @param context the REPL context containing the command to check
 	 * @return description of the command type or "not found" message
+	 * @throws ReplException if no command argument is provided
 	 */
 	@Override
-	public String execute(ReplContext context) {
+	public String execute(ReplContext context) throws ReplException {
 		if (context.getArgs().isEmpty()) {
-			return "type: missing operand";
+			throw new ReplException("type: missing operand");
 		}
 		String commandToTest = context.getArgs().getFirst();
 		if(BuiltinCommand.allCommandMap.containsKey(commandToTest)) {

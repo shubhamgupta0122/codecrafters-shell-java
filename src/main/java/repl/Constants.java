@@ -58,4 +58,6 @@ public class Constants {
 		BACKTICK,
 		NEWLINE
 	);
+
+	public static final Set<String> STDOUT_REDIRECT = Set.of("1>", ">");
 }

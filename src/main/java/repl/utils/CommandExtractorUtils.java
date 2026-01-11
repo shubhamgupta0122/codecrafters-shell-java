@@ -4,6 +4,7 @@ import lombok.experimental.UtilityClass;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static repl.Constants.*;
 
@@ -75,7 +76,8 @@ public class CommandExtractorUtils {
 	 */
 	public record ExtractedCommand(
 		String mainCommandStr,
-		List<String> args
+		List<String> args,
+		String stdoutRedirectTo
 	) { }
 
 	/**
@@ -91,7 +93,7 @@ public class CommandExtractorUtils {
 	 * </ul>
 	 */
 	private enum ParserState {
-		/** Normal parsing mode, outside of any quotes. */
+		/** Normal parsing mode, outside any quotes. */
 		NORMAL,
 
 		/** Inside single quotes; all characters (including whitespace) are treated literally. */
@@ -130,7 +132,7 @@ public class CommandExtractorUtils {
 
 		// Handle empty input
 		if (strippedInput.isEmpty()) {
-			return new ExtractedCommand("", new ArrayList<>());
+			return new ExtractedCommand("", new ArrayList<>(), "");
 		}
 
 		// Parse entire input into tokens using state machine
@@ -138,16 +140,41 @@ public class CommandExtractorUtils {
 
 		// Handle case where parsing produces no tokens
 		if (tokens.isEmpty()) {
-			return new ExtractedCommand("", new ArrayList<>());
+			return new ExtractedCommand("", new ArrayList<>(), "");
 		}
 
 		// First token is command, remaining are arguments
-		String mainCommandStr = tokens.get(0);
-		List<String> args = tokens.size() > 1
-				? new ArrayList<>(tokens.subList(1, tokens.size()))
-				: new ArrayList<>();
+		String mainCommandStr = tokens.getFirst();
 
-		return new ExtractedCommand(mainCommandStr, args);
+		if(tokens.size() == 1) {
+			return new ExtractedCommand(
+				mainCommandStr,
+				new ArrayList<>(),
+				null
+			);
+		}
+
+		int indexOfStdoutRedirect = IntStream.range(1, tokens.size())
+			.filter(i -> STDOUT_REDIRECT.contains(tokens.get(i)))
+			.findFirst()
+			.orElse(-1);
+		if(indexOfStdoutRedirect <0) {
+			return new ExtractedCommand(
+				mainCommandStr,
+				new ArrayList<>(tokens.subList(1, tokens.size())),
+				null
+			);
+		}
+
+		if (indexOfStdoutRedirect != tokens.size() - 2) {
+			throw new IllegalArgumentException("single token expected after stdout redirection");
+		}
+
+		return new ExtractedCommand(
+			mainCommandStr,
+			new ArrayList<>(tokens.subList(1, indexOfStdoutRedirect)),
+			tokens.getLast()
+		);
 	}
 
 	/**

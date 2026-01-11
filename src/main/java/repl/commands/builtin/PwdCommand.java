@@ -2,7 +2,6 @@ package repl.commands.builtin;
 
 import repl.ReplContext;
 import repl.commands.Command;
-import repl.exceptions.ReplException;
 
 /**
  * Builtin command that prints the current working directory.
@@ -18,7 +17,7 @@ public class PwdCommand implements Command {
 	 * @return the absolute path of the current working directory
 	 */
 	@Override
-	public String execute(ReplContext context) throws ReplException {
+	public String execute(ReplContext context) {
 		return context.getDirUtils().getCurrentDir()
 				.toAbsolutePath()
 				.toString();

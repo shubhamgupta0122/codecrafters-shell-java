@@ -60,13 +60,17 @@ class ExecutableCommandTest {
 	// === Error handling ===
 
 	@Test
-	void execute_nonExistentCommand_returnsErrorMessage() throws ReplException {
+	void execute_nonExistentCommand_throwsReplException() {
 		when(mockContext.getMainCommandStr()).thenReturn("nonexistent_command_xyz");
 		when(mockContext.getArgs()).thenReturn(List.of());
 
-		String result = executableCommand.execute(mockContext);
+		ReplException exception = assertThrows(
+			ReplException.class,
+			() -> executableCommand.execute(mockContext)
+		);
 
-		assertTrue(result.contains("nonexistent_command_xyz"));
-		assertTrue(result.contains("execution failed"));
+		String message = exception.getMessage();
+		assertTrue(message.contains("nonexistent_command_xyz"));
+		assertTrue(message.contains("execution failed") || message.contains("Cannot run program"));
 	}
 }

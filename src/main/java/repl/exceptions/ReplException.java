@@ -13,6 +13,12 @@ public class ReplException extends Exception {
 	 * @param cause the underlying exception that caused this error
 	 */
 	public ReplException(Throwable cause) {
-		super(cause);
+		super(cause.getMessage(), cause);
+	}
+	public ReplException(String message, Throwable cause) {
+		super(message, cause);
+	}
+	public ReplException(String message) {
+		super(message);
 	}
 }

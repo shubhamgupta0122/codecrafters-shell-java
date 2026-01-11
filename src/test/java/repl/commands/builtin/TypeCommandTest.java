@@ -99,11 +99,14 @@ class TypeCommandTest {
 	// === Input validation ===
 
 	@Test
-	void execute_noArgs_returnsErrorMessage() throws ReplException {
+	void execute_noArgs_throwsReplExceptionWithMissingOperand() {
 		when(mockContext.getArgs()).thenReturn(List.of());
 
-		String result = typeCommand.execute(mockContext);
+		ReplException exception = assertThrows(
+			ReplException.class,
+			() -> typeCommand.execute(mockContext)
+		);
 
-		assertTrue(result.contains("missing operand"));
+		assertEquals("type: missing operand", exception.getMessage());
 	}
 }

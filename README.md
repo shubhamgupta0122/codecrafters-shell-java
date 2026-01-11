@@ -17,6 +17,10 @@ This project is a Java implementation of a basic POSIX-compliant shell, develope
     *   Single quotes (`'...'`): Preserves literal text including spaces.
     *   Double quotes (`"..."`): Preserves literal text including spaces, with selective backslash escaping.
     *   Escape character (`\`): Escapes the next character outside quotes.
+*   **Stdout Redirection:** Redirect command output to files using `>` or `1>` operators.
+    *   Automatically creates parent directories if they don't exist.
+    *   Overwrites existing files.
+    *   Examples: `echo hello > output.txt`, `pwd 1> dir.txt`, `ls > logs/output.txt`
 *   **Cross-Platform Support:** Compatible with Unix, Linux, macOS, and Windows.
 
 ## Project Structure
