@@ -213,4 +213,36 @@ class ReplEvaluatorTest {
 		String fileContent = Files.readString(outputFile);
 		assertEquals("", fileContent);
 	}
+
+	@Test
+	void eval_commandFailsButProducesStdout_redirectsStdoutAndThrows() throws IOException {
+		// Create a file to read successfully
+		Path validFile = tempDir.resolve("valid.txt");
+		Files.writeString(validFile, "valid content\n");
+
+		// cat valid.txt nonexistent > output.txt
+		// Should redirect "valid content" to file even though command fails
+		ReplEvaluator evaluator = new ReplEvaluator(
+			"cat " + validFile + " nonexistent > output.txt",
+			contextBuilder
+		);
+
+		// Command should throw exception due to nonexistent file
+		ReplException exception = assertThrows(
+			ReplException.class,
+			() -> evaluator.eval()
+		);
+
+		// Error message should be about the nonexistent file
+		assertTrue(exception.getMessage().contains("nonexistent") ||
+				   exception.getMessage().contains("No such file"),
+			"Exception message should mention the error: " + exception.getMessage());
+
+		// But stdout should still be redirected to the file
+		Path outputFile = tempDir.resolve("output.txt");
+		assertTrue(Files.exists(outputFile), "Output file should exist even though command failed");
+		String fileContent = Files.readString(outputFile);
+		assertEquals("valid content", fileContent,
+			"Stdout should be redirected even when command fails");
+	}
 }

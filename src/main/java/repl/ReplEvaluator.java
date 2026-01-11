@@ -80,13 +80,21 @@ public class ReplEvaluator {
 				command = new BadCommand();
 		}
 
-		String output = command.execute(context);
+		try {
+			String output = command.execute(context);
 
-		if(context.getStdoutRedirectTo() == null) {
-			return output;
-		} else {
-			redirectOutput(output, context.getStdoutRedirectTo());
-			return null;
+			if(context.getStdoutRedirectTo() == null) {
+				return output;
+			} else {
+				redirectOutput(output, context.getStdoutRedirectTo());
+				return null;
+			}
+		} catch (ReplException e) {
+			// If command failed but produced stdout, redirect it before re-throwing
+			if (context.getStdoutRedirectTo() != null && e.getCapturedStdout() != null) {
+				redirectOutput(e.getCapturedStdout(), context.getStdoutRedirectTo());
+			}
+			throw e;
 		}
 	}
 

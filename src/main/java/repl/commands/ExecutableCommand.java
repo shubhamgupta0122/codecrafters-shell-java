@@ -46,16 +46,18 @@ public class ExecutableCommand implements Command {
 			// Wait for completion
 			int exitCode = process.waitFor();
 
+			// Strip trailing whitespace from stdout (REPL adds newline)
+			String cleanStdout = stdout.stripTrailing();
+
 			if(exitCode != 0) {
-				if (stderr.isBlank()) {
-					throw new ReplException(context.getMainCommandStr() + ": command failed with exit code " + exitCode);
-				} else {
-					throw new ReplException(stderr.stripTrailing());
-				}
+				String errorMsg = stderr.isBlank()
+					? context.getMainCommandStr() + ": command failed with exit code " + exitCode
+					: stderr.stripTrailing();
+				// Include stdout so it can be redirected even on failure
+				throw new ReplException(errorMsg, cleanStdout);
 			}
 
-			// Strip trailing whitespace (REPL adds newline)
-			return stdout.stripTrailing();
+			return cleanStdout;
 		} catch (IOException | InterruptedException e) {
 			throw new ReplException(mainCommandStr + ": execution failed: " + e.getMessage(), e);
 		}
