@@ -19,12 +19,13 @@ public interface Command {
 	/**
 	 * Executes this command with the given context.
 	 *
-	 * <p>Returns output as a string; REPL handles printing. Throw {@link ReplException} for errors
-	 * or {@link repl.exceptions.GracefulExitException} to exit shell.
+	 * <p>Returns output as a CommandResult containing stdout and stderr; REPL handles printing
+	 * and redirection. Throw {@link ReplException} for errors or
+	 * {@link repl.exceptions.GracefulExitException} to exit shell.
 	 *
 	 * @param context the REPL context containing command input, arguments, and shared services
-	 * @return the output string to be printed, or null/empty if no output
+	 * @return the command result containing stdout and stderr streams
 	 * @throws ReplException if command execution fails or encounters an error
 	 */
-	String execute(ReplContext context) throws ReplException;
+	CommandResult execute(ReplContext context) throws ReplException;
 }

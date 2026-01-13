@@ -6,7 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import repl.ReplContext;
-import repl.exceptions.ReplException;
+import repl.commands.CommandResult;
 
 import java.util.List;
 
@@ -25,41 +25,45 @@ class EchoCommandTest {
 
 	@Test
 	@Tag("IZ3")
-	void execute_singleArg_returnsArg() throws ReplException {
+	void execute_singleArg_returnsArg() {
 		when(mockContext.getArgs()).thenReturn(List.of("hello"));
 
-		String result = echoCommand.execute(mockContext);
+		CommandResult result = echoCommand.execute(mockContext);
 
-		assertEquals("hello", result);
+		assertEquals("hello", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	@Test
 	@Tag("IZ3")
-	void execute_multipleArgs_returnsArgsJoinedBySpaces() throws ReplException {
+	void execute_multipleArgs_returnsArgsJoinedBySpaces() {
 		when(mockContext.getArgs()).thenReturn(List.of("hello", "world"));
 
-		String result = echoCommand.execute(mockContext);
+		CommandResult result = echoCommand.execute(mockContext);
 
-		assertEquals("hello world", result);
+		assertEquals("hello world", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	@Test
 	@Tag("IZ3")
-	void execute_noArgs_returnsEmptyString() throws ReplException {
+	void execute_noArgs_returnsEmptyString() {
 		when(mockContext.getArgs()).thenReturn(List.of());
 
-		String result = echoCommand.execute(mockContext);
+		CommandResult result = echoCommand.execute(mockContext);
 
-		assertEquals("", result);
+		assertEquals("", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	@Test
 	@Tag("IZ3")
-	void execute_manyArgs_joinsAll() throws ReplException {
+	void execute_manyArgs_joinsAll() {
 		when(mockContext.getArgs()).thenReturn(List.of("a", "b", "c", "d", "e"));
 
-		String result = echoCommand.execute(mockContext);
+		CommandResult result = echoCommand.execute(mockContext);
 
-		assertEquals("a b c d e", result);
+		assertEquals("a b c d e", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 }

@@ -62,6 +62,30 @@ public class ReplContext {
 	@Getter
 	String stdoutRedirectTo;
 
+	@Getter
+	String stderrRedirectTo;
+
+	/**
+	 * The resolved absolute path to an external executable command.
+	 * Null for builtin commands or invalid commands.
+	 * Cached to avoid redundant PATH lookups.
+	 *
+	 * <p>Mutable field set by ReplEvaluator after command resolution.
+	 */
+	@Getter
+	@lombok.experimental.NonFinal
+	java.nio.file.Path executablePath;
+
+	/**
+	 * Sets the resolved executable path.
+	 * Package-private to allow ReplEvaluator to cache the resolved path.
+	 *
+	 * @param executablePath the resolved absolute path to the executable
+	 */
+	void setExecutablePath(java.nio.file.Path executablePath) {
+		this.executablePath = executablePath;
+	}
+
 	/**
 	 * Private constructor - use {@link Builder} to create instances.
 	 */
@@ -71,6 +95,8 @@ public class ReplContext {
 		this.mainCommandStr = builder.mainCommandStr;
 		this.args = builder.args;
 		this.stdoutRedirectTo = builder.stdoutRedirectTo;
+		this.stderrRedirectTo = builder.stderrRedirectTo;
+		this.executablePath = builder.executablePath;
 	}
 
 	/**
@@ -100,6 +126,17 @@ public class ReplContext {
 		String mainCommandStr;
 		List<String> args;
 		String stdoutRedirectTo;
+		String stderrRedirectTo;
+		java.nio.file.Path executablePath;
+
+		/**
+		 * Gets the DirUtils instance for the current session.
+		 *
+		 * @return the directory utilities
+		 */
+		public DirUtils getDirUtils() {
+			return dirUtils;
+		}
 
 		/**
 		 * Sets the original input string.
@@ -122,6 +159,7 @@ public class ReplContext {
 			mainCommandStr = extractedCommand.mainCommandStr();
 			args = extractedCommand.args();
 			stdoutRedirectTo = extractedCommand.stdoutRedirectTo();
+			stderrRedirectTo = extractedCommand.stderrRedirectTo();
 			return new ReplContext(this);
 		}
 	}

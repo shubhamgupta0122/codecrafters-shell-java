@@ -77,7 +77,8 @@ public class CommandExtractorUtils {
 	public record ExtractedCommand(
 		String mainCommandStr,
 		List<String> args,
-		String stdoutRedirectTo
+		String stdoutRedirectTo,
+		String stderrRedirectTo
 	) { }
 
 	/**
@@ -140,7 +141,8 @@ public class CommandExtractorUtils {
 		return new ExtractedCommand(
 			command,
 			new ArrayList<>(tokens.subList(1, redirectInfo.argsEndIndex())),
-			redirectInfo.target()
+			redirectInfo.stdoutTarget(),
+			redirectInfo.stderrTarget()
 		);
 	}
 
@@ -148,44 +150,69 @@ public class CommandExtractorUtils {
 	 * Creates an ExtractedCommand representing empty input.
 	 */
 	private static ExtractedCommand emptyCommand() {
-		return new ExtractedCommand("", new ArrayList<>(), null);
+		return new ExtractedCommand("", new ArrayList<>(), null, null);
 	}
 
 	/**
-	 * Extracts stdout redirect information from tokens.
+	 * Extracts stdout and stderr redirect information from tokens.
 	 *
 	 * @param tokens the parsed token list
-	 * @return RedirectInfo containing the args end index and redirect target (if any)
-	 * @throws IllegalArgumentException if redirect operator is not followed by exactly one token
+	 * @return RedirectInfo containing the args end index and redirect targets (if any)
+	 * @throws IllegalArgumentException if redirect operator is not followed by exactly one token,
+	 *                                  or if both stdout and stderr redirects are present
 	 */
 	private static RedirectInfo extractRedirectInfo(List<String> tokens) {
 		if (tokens.size() == 1) {
-			return new RedirectInfo(tokens.size(), null);
+			return new RedirectInfo(tokens.size(), null, null);
 		}
 
-		int redirectIndex = IntStream.range(1, tokens.size())
+		// Find stdout redirect (> or 1>)
+		int stdoutRedirectIndex = IntStream.range(1, tokens.size())
 			.filter(i -> STDOUT_REDIRECT.contains(tokens.get(i)))
 			.findFirst()
 			.orElse(-1);
 
-		if (redirectIndex < 0) {
-			return new RedirectInfo(tokens.size(), null);
+		// Find stderr redirect (2>)
+		int stderrRedirectIndex = IntStream.range(1, tokens.size())
+			.filter(i -> STDERR_REDIRECT.contains(tokens.get(i)))
+			.findFirst()
+			.orElse(-1);
+
+		// No redirects
+		if (stdoutRedirectIndex < 0 && stderrRedirectIndex < 0) {
+			return new RedirectInfo(tokens.size(), null, null);
 		}
 
-		if (redirectIndex != tokens.size() - 2) {
+		// Validate redirect format
+		if (stdoutRedirectIndex >= 0 && stdoutRedirectIndex != tokens.size() - 2) {
 			throw new IllegalArgumentException("single token expected after stdout redirection");
 		}
+		if (stderrRedirectIndex >= 0 && stderrRedirectIndex != tokens.size() - 2) {
+			throw new IllegalArgumentException("single token expected after stderr redirection");
+		}
 
-		return new RedirectInfo(redirectIndex, tokens.getLast());
+		// Both redirects present - not supported for now
+		if (stdoutRedirectIndex >= 0 && stderrRedirectIndex >= 0) {
+			throw new IllegalArgumentException("cannot redirect both stdout and stderr simultaneously");
+		}
+
+		// Extract redirect targets
+		String stdoutTarget = stdoutRedirectIndex >= 0 ? tokens.get(stdoutRedirectIndex + 1) : null;
+		String stderrTarget = stderrRedirectIndex >= 0 ? tokens.get(stderrRedirectIndex + 1) : null;
+
+		int redirectIndex = Math.max(stdoutRedirectIndex, stderrRedirectIndex);
+
+		return new RedirectInfo(redirectIndex, stdoutTarget, stderrTarget);
 	}
 
 	/**
 	 * Internal record for redirect parsing results.
 	 *
 	 * @param argsEndIndex the index where arguments end (exclusive)
-	 * @param target the redirect target filename, or null if no redirection
+	 * @param stdoutTarget the stdout redirect target filename, or null if no stdout redirection
+	 * @param stderrTarget the stderr redirect target filename, or null if no stderr redirection
 	 */
-	private record RedirectInfo(int argsEndIndex, String target) { }
+	private record RedirectInfo(int argsEndIndex, String stdoutTarget, String stderrTarget) { }
 
 	/**
 	 * Parses input string into tokens using shell quoting/escaping rules.

@@ -4,13 +4,27 @@ import repl.exceptions.GracefulExitException;
 import repl.exceptions.ReplException;
 import repl.utils.DirUtils;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Scanner;
 
 /**
  * The main Read-Eval-Print Loop that orchestrates the interactive shell.
  *
  * <p>Implements the classic REPL pattern: reads user input, evaluates commands,
- * prints results, and loops until exit. Uses tail recursion for the main loop.
+ * handles I/O redirection, prints results, and loops until exit. Uses tail recursion
+ * for the main loop.
+ *
+ * <p>Responsibilities:
+ * <ul>
+ *   <li>Reading user input from stdin</li>
+ *   <li>Delegating command evaluation to {@link ReplEvaluator}</li>
+ *   <li>Handling stdout and stderr redirection to files</li>
+ *   <li>Printing output to the terminal</li>
+ *   <li>Error handling and recovery</li>
+ * </ul>
  *
  * <p>Example usage:
  * <pre>{@code
@@ -19,24 +33,34 @@ import java.util.Scanner;
  * }</pre>
  *
  * @see ReplEvaluator
+ * @see EvaluationResult
  */
 public class REPL {
 
 	/** The context builder with shared services (reused across commands). */
 	private final ReplContext.Builder contextBuilder;
 
-	/** Scanner for reading user input (reused across all inputs). */
+	/**
+	 * Scanner for reading user input (reused across all inputs).
+	 *
+	 * <p><strong>Resource Management:</strong> This Scanner is intentionally NOT closed
+	 * because closing it would close System.in, preventing any further input.
+	 * The Scanner lifecycle is tied to the REPL lifecycle and terminates when
+	 * the JVM exits. This is the correct pattern for interactive CLI applications.
+	 */
 	private final Scanner scanner = new Scanner(System.in);
 
 	/**
 	 * Creates a new REPL instance with default shared services.
 	 *
-	 * <p>Redirects stderr to stdout to ensure error messages and prompts appear
-	 * in the correct order without requiring timing delays or sleep calls.
+	 * <p>Redirects stderr to stdout to ensure error messages from REPL itself
+	 * appear in correct order with prompts. This does not affect command stderr
+	 * redirection (handled separately in {@link #handleIO}).
 	 */
 	public REPL() {
 		this(new DirUtils());
-		// Redirect stderr to stdout to ensure proper ordering without timing dependencies
+		// Redirect REPL's own stderr to stdout for proper ordering
+		// Command stderr is handled separately before this takes effect
 		System.setErr(System.out);
 	}
 
@@ -54,13 +78,13 @@ public class REPL {
 	/**
 	 * Starts the main REPL loop.
 	 *
-	 * <p>Repeatedly reads user input, evaluates it, and prints output until the user
-	 * exits. Uses tail recursion instead of an explicit while loop.
+	 * <p>Repeatedly reads user input, evaluates it, handles I/O redirection,
+	 * and prints output until the user exits. Uses tail recursion instead of
+	 * an explicit while loop.
 	 *
-	 * <p>Flow: read → eval → print → loop (repeat)
+	 * <p>Flow: read → eval → handle I/O → loop (repeat)
 	 *
-	 * <p>Errors are caught and printed to stderr (which is redirected to stdout
-	 * during REPL construction to ensure proper ordering). The shell continues
+	 * <p>Errors are caught and printed to stderr. The shell continues
 	 * running after errors.
 	 */
 	@SuppressWarnings("InfiniteRecursion")
@@ -68,17 +92,73 @@ public class REPL {
 		try {
 			String input = read();
 			ReplEvaluator evaluator = new ReplEvaluator(input, contextBuilder);
-			String output = evaluator.eval();
-			print(output);
+			EvaluationResult result = evaluator.eval();
+			handleIO(result);
 			loop();
 		} catch (GracefulExitException _) {
 		} catch (ReplException e) {
 			System.err.println(e.getMessage());
 			loop();
 		} catch (RuntimeException e) {
-			// Print error to stderr (redirected to stdout for proper ordering)
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			loop();
+		}
+	}
+
+	/**
+	 * Handles command output based on evaluation result.
+	 *
+	 * <p>For each output stream (stdout, stderr):
+	 * <ul>
+	 *   <li>If redirection is specified, writes to file</li>
+	 *   <li>Otherwise, prints to the corresponding terminal stream</li>
+	 * </ul>
+	 *
+	 * <p>Package-private for testing.
+	 *
+	 * @param result the evaluation result containing output and redirect targets
+	 * @throws ReplException if file I/O fails during redirection
+	 */
+	void handleIO(EvaluationResult result) throws ReplException {
+		// Handle stdout
+		if (result.hasStdoutRedirect()) {
+			redirectOutput(result.commandResult().stdout(), result.stdoutRedirectTo());
+		} else if (!result.commandResult().stdout().isEmpty()) {
+			System.out.println(result.commandResult().stdout());
+		}
+
+		// Handle stderr
+		if (result.hasStderrRedirect()) {
+			redirectOutput(result.commandResult().stderr(), result.stderrRedirectTo());
+		} else if (!result.commandResult().stderr().isEmpty()) {
+			System.err.println(result.commandResult().stderr());
+		}
+	}
+
+	/**
+	 * Redirects output to a file.
+	 *
+	 * <p>Creates parent directories if they don't exist. Overwrites the file
+	 * if it already exists.
+	 *
+	 * @param output the output string to write
+	 * @param redirectTo the target file path (relative to current working directory)
+	 * @throws ReplException if file I/O fails
+	 */
+	private void redirectOutput(String output, String redirectTo) throws ReplException {
+		try {
+			// Resolve relative paths against current working directory
+			Path outputPath = contextBuilder.getDirUtils().getCurrentDir().resolve(redirectTo);
+
+			// Ensure parent directories exist
+			Path parentDir = outputPath.getParent();
+			if (parentDir != null && !Files.exists(parentDir)) {
+				Files.createDirectories(parentDir);
+			}
+
+			Files.writeString(outputPath, output, StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			throw new ReplException(e);
 		}
 	}
 
@@ -92,16 +172,6 @@ public class REPL {
 	private String read() {
 		showPrompt();
 		return readPrompt();
-	}
-
-	/**
-	 * Prints command output to stdout.
-	 *
-	 * @param output the output string to print
-	 */
-	private void print(String output) {
-		if(output != null)
-			System.out.println(output);
 	}
 
 	/**

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import repl.ReplContext;
+import repl.commands.CommandResult;
 import repl.exceptions.ReplException;
 import repl.utils.DirUtils;
 
@@ -37,30 +38,29 @@ class ChangeDirCommandTest {
 
 	@Test
 	@Tag("RA6")
-	void execute_withValidPath_returnsNull() throws ReplException, IOException {
+	void execute_withValidPath_returnsEmpty() throws ReplException, IOException {
 		Path subDir = Files.createDirectory(tempDir.resolve("subdir"));
 		when(mockContext.getArgs()).thenReturn(List.of(subDir.toString()));
 		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
 
-		String result = cdCommand.execute(mockContext);
+		CommandResult result = cdCommand.execute(mockContext);
 
-		assertNull(result);
+		assertTrue(result.isSuccess());
+		assertTrue(result.stdout().isEmpty());
 		verify(mockDirUtils).setCurrentDir(subDir.toString());
 	}
 
 	@Test
 	@Tag("RA6")
-	void execute_nonExistentPath_throwsReplExceptionWithErrorMessage() throws IOException {
+	void execute_nonExistentPath_returnsErrorMessage() throws IOException, ReplException {
 		when(mockContext.getArgs()).thenReturn(List.of("nonexistent"));
 		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
 		doThrow(new NoSuchFileException("nonexistent")).when(mockDirUtils).setCurrentDir("nonexistent");
 
-		ReplException exception = assertThrows(
-			ReplException.class,
-			() -> cdCommand.execute(mockContext)
-		);
+		CommandResult result = cdCommand.execute(mockContext);
 
-		assertEquals("cd: nonexistent: No such file or directory", exception.getMessage());
+		assertFalse(result.isSuccess());
+		assertEquals("cd: nonexistent: No such file or directory", result.stderr());
 	}
 
 	// === Stage #GP4: Navigation - The cd builtin: Home directory ===
@@ -71,9 +71,10 @@ class ChangeDirCommandTest {
 		when(mockContext.getArgs()).thenReturn(List.of());
 		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
 
-		String result = cdCommand.execute(mockContext);
+		CommandResult result = cdCommand.execute(mockContext);
 
-		assertNull(result);
+		assertTrue(result.isSuccess());
+		assertTrue(result.stdout().isEmpty());
 		verify(mockDirUtils).setCurrentDir("~");
 	}
 
@@ -88,9 +89,10 @@ class ChangeDirCommandTest {
 		when(mockContext.getArgs()).thenReturn(List.of("testdir"));
 		when(mockContext.getDirUtils()).thenReturn(realDirUtils);
 
-		String result = cdCommand.execute(mockContext);
+		CommandResult result = cdCommand.execute(mockContext);
 
-		assertNull(result);
+		assertTrue(result.isSuccess());
+		assertTrue(result.stdout().isEmpty());
 		assertEquals(subDir.toRealPath(), realDirUtils.getCurrentDir());
 	}
 

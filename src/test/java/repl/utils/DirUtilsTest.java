@@ -118,8 +118,25 @@ class DirUtilsTest {
 	}
 
 	@Test
-	void homeDirPath_matchesEnvironment() {
-		assertEquals(System.getenv("HOME"), DirUtils.HomeDirPath);
+	void homeDirPath_isSet() {
+		// Verify HomeDirPath is set (either from HOME env or user.home property)
+		assertNotNull(DirUtils.HomeDirPath, "HomeDirPath should be set");
+		assertFalse(DirUtils.HomeDirPath.isEmpty(), "HomeDirPath should not be empty");
+	}
+
+	@Test
+	void homeDirPath_matchesEnvironmentOrProperty() {
+		// On Unix/Linux/Mac: should match HOME environment variable
+		// On Windows: may match HOME or fall back to user.home property
+		String homeEnv = System.getenv("HOME");
+		String userHomeProperty = System.getProperty("user.home");
+
+		// At least one should match
+		assertTrue(
+			DirUtils.HomeDirPath.equals(homeEnv) || DirUtils.HomeDirPath.equals(userHomeProperty),
+			"HomeDirPath should match either HOME env or user.home property. " +
+			"Got: " + DirUtils.HomeDirPath + ", HOME=" + homeEnv + ", user.home=" + userHomeProperty
+		);
 	}
 
 	// === Tilde Expansion Edge Cases ===

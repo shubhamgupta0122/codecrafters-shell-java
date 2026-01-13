@@ -4,6 +4,8 @@ import repl.ReplContext;
 import repl.exceptions.ReplException;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,21 +20,27 @@ public class ExecutableCommand implements Command {
 	 * Executes the external command and captures its output.
 	 *
 	 * <p>Spawns a new process using ProcessBuilder, waits for completion, and
-	 * returns stdout if successful (exit code 0). If the process fails (non-zero
-	 * exit code), throws ReplException with stderr content.
+	 * returns a CommandResult containing stdout, stderr, and exit code.
 	 *
 	 * @param context the REPL context containing command and arguments
-	 * @return the captured stdout from the process (only if exit code is 0)
-	 * @throws ReplException if the process exits with non-zero code (stderr as message)
-	 *                        or if IOException/InterruptedException occurs
+	 * @return the command result with stdout, stderr, and exit code
+	 * @throws ReplException only for truly unexpected errors (IOException, InterruptedException)
 	 */
 	@Override
-	public String execute(ReplContext context) throws ReplException {
+	public CommandResult execute(ReplContext context) throws ReplException {
 		String mainCommandStr = context.getMainCommandStr();
 		try {
 			// Build command list
 			List<String> command = new ArrayList<>();
-			command.add(mainCommandStr);
+
+			// Use cached executable path if available (avoids redundant PATH lookup)
+			if (context.getExecutablePath() != null) {
+				command.add(context.getExecutablePath().toString());
+			} else {
+				// Fallback to command name (ProcessBuilder will search PATH)
+				command.add(mainCommandStr);
+			}
+
 			command.addAll(context.getArgs());
 
 			// Create and configure process
@@ -40,24 +48,26 @@ public class ExecutableCommand implements Command {
 
 			// Start process and capture output
 			Process process = pb.start();
-			String stdout = new String(process.getInputStream().readAllBytes());
-			String stderr = new String(process.getErrorStream().readAllBytes());
+
+			// Get streams with null checking
+			InputStream stdoutStream = process.getInputStream();
+			InputStream stderrStream = process.getErrorStream();
+			if (stdoutStream == null || stderrStream == null) {
+				throw new ReplException("Process streams unavailable for command: " + mainCommandStr);
+			}
+
+			// Read output with explicit UTF-8 encoding
+			String stdout = new String(stdoutStream.readAllBytes(), StandardCharsets.UTF_8);
+			String stderr = new String(stderrStream.readAllBytes(), StandardCharsets.UTF_8);
 
 			// Wait for completion
 			int exitCode = process.waitFor();
 
-			// Strip trailing whitespace from stdout (REPL adds newline)
+			// Strip trailing whitespace (REPL adds newlines)
 			String cleanStdout = stdout.stripTrailing();
+			String cleanStderr = stderr.stripTrailing();
 
-			if(exitCode != 0) {
-				String errorMsg = stderr.isBlank()
-					? context.getMainCommandStr() + ": command failed with exit code " + exitCode
-					: stderr.stripTrailing();
-				// Include stdout so it can be redirected even on failure
-				throw new ReplException(errorMsg, cleanStdout);
-			}
-
-			return cleanStdout;
+			return new CommandResult(cleanStdout, cleanStderr, exitCode);
 		} catch (IOException | InterruptedException e) {
 			throw new ReplException(mainCommandStr + ": execution failed: " + e.getMessage(), e);
 		}

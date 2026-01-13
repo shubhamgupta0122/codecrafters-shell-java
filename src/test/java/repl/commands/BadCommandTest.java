@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import repl.Messages;
 import repl.ReplContext;
-import repl.exceptions.ReplException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -23,32 +23,28 @@ class BadCommandTest {
 
 	@Test
 	@Tag("CZ2")
-	void execute_throwsReplExceptionWithCommandNotFoundMessage() {
+	void execute_returnsErrorWithCommandNotFoundMessage() {
 		when(mockContext.getMainCommandStr()).thenReturn("unknowncmd");
 
-		ReplException exception = assertThrows(
-			ReplException.class,
-			() -> badCommand.execute(mockContext)
-		);
+		CommandResult result = badCommand.execute(mockContext);
 
-		assertEquals("unknowncmd: command not found", exception.getMessage());
+		assertFalse(result.isSuccess());
+		assertEquals("unknowncmd: command not found", result.stderr());
 	}
 
 	@Test
 	@Tag("CZ2")
-	void execute_withDifferentCommand_throwsExceptionIncludingCommandName() {
+	void execute_withDifferentCommand_returnsErrorIncludingCommandName() {
 		when(mockContext.getMainCommandStr()).thenReturn("foobar");
 
-		ReplException exception = assertThrows(
-			ReplException.class,
-			() -> badCommand.execute(mockContext)
-		);
+		CommandResult result = badCommand.execute(mockContext);
 
-		assertEquals("foobar: command not found", exception.getMessage());
+		assertFalse(result.isSuccess());
+		assertEquals("foobar: command not found", result.stderr());
 	}
 
 	@Test
 	void commandNotFound_constant_hasCorrectValue() {
-		assertEquals("command not found", BadCommand.COMMAND_NOT_FOUND);
+		assertEquals("command not found", Messages.COMMAND_NOT_FOUND);
 	}
 }

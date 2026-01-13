@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import repl.ReplContext;
+import repl.commands.CommandResult;
 import repl.exceptions.ReplException;
 
 import java.util.List;
@@ -29,9 +30,10 @@ class ExecutableCommandTest {
 		when(mockContext.getMainCommandStr()).thenReturn("echo");
 		when(mockContext.getArgs()).thenReturn(List.of("hello", "world"));
 
-		String result = executableCommand.execute(mockContext);
+		CommandResult result = executableCommand.execute(mockContext);
 
-		assertEquals("hello world", result);
+		assertEquals("hello world", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	@Test
@@ -40,10 +42,11 @@ class ExecutableCommandTest {
 		when(mockContext.getMainCommandStr()).thenReturn("pwd");
 		when(mockContext.getArgs()).thenReturn(List.of());
 
-		String result = executableCommand.execute(mockContext);
+		CommandResult result = executableCommand.execute(mockContext);
 
-		assertNotNull(result);
-		assertFalse(result.isEmpty());
+		assertNotNull(result.stdout());
+		assertFalse(result.stdout().isEmpty());
+		assertTrue(result.isSuccess());
 	}
 
 	@Test
@@ -52,9 +55,10 @@ class ExecutableCommandTest {
 		when(mockContext.getMainCommandStr()).thenReturn("date");
 		when(mockContext.getArgs()).thenReturn(List.of());
 
-		String result = executableCommand.execute(mockContext);
+		CommandResult result = executableCommand.execute(mockContext);
 
-		assertNotNull(result);
+		assertNotNull(result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	// === Error handling ===
