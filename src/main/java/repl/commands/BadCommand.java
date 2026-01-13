@@ -2,7 +2,6 @@ package repl.commands;
 
 import repl.Messages;
 import repl.ReplContext;
-import repl.exceptions.ReplException;
 
 /**
  * Command handler for invalid or unrecognized commands.

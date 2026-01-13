@@ -74,7 +74,7 @@ class ReplEvaluatorTest {
 	}
 
 	@Test
-	void eval_pwdCommand_returnsCurrentDirectory() throws ReplException, IOException {
+	void eval_pwdCommand_returnsCurrentDirectory() throws ReplException {
 		ReplEvaluator evaluator = new ReplEvaluator("pwd", contextBuilder);
 
 		EvaluationResult result = evaluator.eval();

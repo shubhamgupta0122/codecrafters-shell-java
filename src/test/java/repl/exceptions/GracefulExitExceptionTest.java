@@ -17,7 +17,7 @@ class GracefulExitExceptionTest {
 	void extendsReplException() {
 		GracefulExitException exception = new GracefulExitException();
 
-		assertTrue(exception instanceof ReplException);
+		assertInstanceOf(ReplException.class, exception);
 	}
 
 	@Test

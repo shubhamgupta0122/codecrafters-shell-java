@@ -5,9 +5,11 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import repl.utils.DirUtils;
 import repl.utils.CommandExtractorUtils;
 
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -73,8 +75,8 @@ public class ReplContext {
 	 * <p>Mutable field set by ReplEvaluator after command resolution.
 	 */
 	@Getter
-	@lombok.experimental.NonFinal
-	java.nio.file.Path executablePath;
+	@NonFinal
+	Path executablePath;
 
 	/**
 	 * Sets the resolved executable path.
@@ -96,7 +98,6 @@ public class ReplContext {
 		this.args = builder.args;
 		this.stdoutRedirectTo = builder.stdoutRedirectTo;
 		this.stderrRedirectTo = builder.stderrRedirectTo;
-		this.executablePath = builder.executablePath;
 	}
 
 	/**
@@ -119,6 +120,7 @@ public class ReplContext {
 	@FieldDefaults(level = AccessLevel.PRIVATE)
 	public static class Builder {
 		// Shared services (set once in constructor)
+		@Getter
 		final DirUtils dirUtils;
 
 		// Per-request data (set via builder methods)
@@ -127,16 +129,6 @@ public class ReplContext {
 		List<String> args;
 		String stdoutRedirectTo;
 		String stderrRedirectTo;
-		java.nio.file.Path executablePath;
-
-		/**
-		 * Gets the DirUtils instance for the current session.
-		 *
-		 * @return the directory utilities
-		 */
-		public DirUtils getDirUtils() {
-			return dirUtils;
-		}
 
 		/**
 		 * Sets the original input string.

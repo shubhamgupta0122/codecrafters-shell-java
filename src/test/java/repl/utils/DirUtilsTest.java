@@ -71,7 +71,7 @@ class DirUtilsTest {
 
 	@Test
 	void setCurrentDir_parentPath_navigatesUp() throws IOException {
-		Path subDir = Files.createDirectory(tempDir.resolve("subdir"));
+		Files.createDirectory(tempDir.resolve("subdir"));
 		dirUtils.setCurrentDir("subdir");
 
 		dirUtils.setCurrentDir("..");
@@ -87,19 +87,18 @@ class DirUtilsTest {
 
 	@Test
 	void setCurrentDir_tildePath_expandsToHome() throws IOException {
-		String homePath = DirUtils.HomeDirPath;
-		if (homePath != null && Files.exists(Path.of(homePath))) {
+		Path homePath = Path.of(DirUtils.HomeDirPath);
+		if (Files.exists(homePath)) {
 			dirUtils.setCurrentDir("~");
-			assertEquals(Path.of(homePath).toRealPath(), dirUtils.getCurrentDir());
+			assertEquals(homePath.toRealPath(), dirUtils.getCurrentDir());
 		}
 	}
 
 	@Test
 	void setCurrentDir_tildeWithSubpath_expandsCorrectly() throws IOException {
-		String homePath = DirUtils.HomeDirPath;
-		if (homePath != null && Files.exists(Path.of(homePath))) {
+		Path homeDir = Path.of(DirUtils.HomeDirPath);
+		if (Files.exists(homeDir)) {
 			// Only test if home directory exists
-			Path homeDir = Path.of(homePath);
 			// Find a subdirectory in home that exists
 			try (var stream = Files.list(homeDir)) {
 				var subDir = stream.filter(Files::isDirectory).findFirst();
@@ -162,11 +161,10 @@ class DirUtilsTest {
 	}
 
 	@Test
-	void setCurrentDir_doubleTildeAtStart_expandsOnlyFirst() throws IOException {
-		String homePath = DirUtils.HomeDirPath;
-		if (homePath != null && Files.exists(Path.of(homePath))) {
+	void setCurrentDir_doubleTildeAtStart_expandsOnlyFirst() {
+		Path homeDir = Path.of(DirUtils.HomeDirPath);
+		if (Files.exists(homeDir)) {
 			// Create a directory named "~" in home (if possible)
-			Path homeDir = Path.of(homePath);
 			Path tildeSubDir = homeDir.resolve("~");
 
 			// Only test if we can create such a directory
