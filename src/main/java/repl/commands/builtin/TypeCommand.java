@@ -5,7 +5,6 @@ import repl.Messages;
 import repl.ReplContext;
 import repl.commands.Command;
 import repl.commands.CommandResult;
-import repl.exceptions.ReplException;
 import repl.utils.ExecutableUtils;
 
 import java.nio.file.Path;

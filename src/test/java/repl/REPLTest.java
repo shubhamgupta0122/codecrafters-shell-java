@@ -185,14 +185,16 @@ class REPLTest {
 	// === Combined redirection (future feature placeholder) ===
 
 	@Test
-	void handleIO_noRedirect_doesNotCreateFiles() throws ReplException {
+	void handleIO_noRedirect_doesNotCreateFiles() throws ReplException, IOException {
 		CommandResult cmdResult = CommandResult.success("output to terminal");
 		EvaluationResult result = new EvaluationResult(cmdResult, null, null);
 
 		repl.handleIO(result);
 
 		// No files should be created
-		assertEquals(0, tempDir.toFile().listFiles().length, "No files should be created without redirection");
+		try (var stream = Files.list(tempDir)) {
+			assertEquals(0, stream.count(), "No files should be created without redirection");
+		}
 	}
 
 	@Test
