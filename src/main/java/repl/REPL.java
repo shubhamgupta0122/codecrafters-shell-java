@@ -53,14 +53,15 @@ public class REPL {
 	/**
 	 * Creates a new REPL instance with default shared services.
 	 *
-	 * <p>Redirects stderr to stdout to ensure error messages from REPL itself
-	 * appear in correct order with prompts. This does not affect command stderr
-	 * redirection (handled separately in {@link #handleIO}).
+	 * <p>Redirects stderr to stdout for all error output (including command errors
+	 * printed by {@link #handleIO}). This ensures consistent output ordering with prompts.
+	 * Commands that specify stderr redirection via {@code 2>} write to files before
+	 * this global redirection affects them.
 	 */
 	public REPL() {
 		this(new DirUtils());
-		// Redirect REPL's own stderr to stdout for proper ordering
-		// Command stderr is handled separately before this takes effect
+		// Redirect all stderr to stdout for proper ordering
+		// This affects both REPL errors and command stderr (if not redirected to file)
 		System.setErr(System.out);
 	}
 
