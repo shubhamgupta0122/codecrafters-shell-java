@@ -56,6 +56,12 @@ Tests are tagged with JUnit 5 `@Tag` annotations corresponding to CodeCrafters c
 | `MG5` | Locate executable files | `TypeCommandTest` | 1 |
 | `IP1` | Run a program | `ExecutableCommandTest` | 3 |
 
+### Redirection Stages
+
+| Stage | Description | Test Class | Test Count |
+|-------|-------------|------------|------------|
+| `JV1` | Redirection - Redirect stdout | `ReplEvaluatorTest` | 7 |
+
 ### Other Stages
 
 | Stage | Description | Notes |
@@ -76,6 +82,6 @@ Tests are tagged with JUnit 5 `@Tag` annotations corresponding to CodeCrafters c
 | `ExecutableCommandTest` | `repl.commands` | External program execution |
 | `BadCommandTest` | `repl.commands` | Invalid command handling |
 | `ReplContextTest` | `repl` | Context builder and parsing |
-| `ReplEvaluatorTest` | `repl` | Command evaluation integration |
+| `ReplEvaluatorTest` | `repl` | Command evaluation integration, stdout redirection |
 | `ReplExceptionTest` | `repl.exceptions` | Exception handling |
 | `GracefulExitExceptionTest` | `repl.exceptions` | Exit exception behavior |

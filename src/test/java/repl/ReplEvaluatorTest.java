@@ -123,6 +123,7 @@ class ReplEvaluatorTest {
 	// === Stdout redirection tests ===
 
 	@Test
+	@Tag("JV1")
 	void eval_redirectWithGreaterThan_writesOutputToFile() throws ReplException, IOException {
 		ReplEvaluator evaluator = new ReplEvaluator("echo hello world > output.txt", contextBuilder);
 
@@ -139,6 +140,7 @@ class ReplEvaluatorTest {
 	}
 
 	@Test
+	@Tag("JV1")
 	void eval_redirectWith1GreaterThan_writesOutputToFile() throws ReplException, IOException {
 		ReplEvaluator evaluator = new ReplEvaluator("echo test content 1> output2.txt", contextBuilder);
 
@@ -153,6 +155,7 @@ class ReplEvaluatorTest {
 	}
 
 	@Test
+	@Tag("JV1")
 	void eval_redirectToNestedDirectory_createsDirectoriesAndFile() throws ReplException, IOException {
 		ReplEvaluator evaluator = new ReplEvaluator("echo nested output > subdir/nested/file.txt", contextBuilder);
 
@@ -170,6 +173,7 @@ class ReplEvaluatorTest {
 	}
 
 	@Test
+	@Tag("JV1")
 	void eval_redirectBuiltinCommand_writesOutputToFile() throws ReplException, IOException {
 		ReplEvaluator evaluator = new ReplEvaluator("pwd > pwd_output.txt", contextBuilder);
 
@@ -184,6 +188,7 @@ class ReplEvaluatorTest {
 	}
 
 	@Test
+	@Tag("JV1")
 	void eval_redirectOverwritesExistingFile() throws ReplException, IOException {
 		// Create a file with initial content
 		Path outputFile = tempDir.resolve("overwrite.txt");
@@ -201,6 +206,7 @@ class ReplEvaluatorTest {
 	}
 
 	@Test
+	@Tag("JV1")
 	void eval_redirectEmptyOutput_createsEmptyFile() throws ReplException, IOException {
 		ReplEvaluator evaluator = new ReplEvaluator("echo '' > empty.txt", contextBuilder);
 
@@ -215,6 +221,7 @@ class ReplEvaluatorTest {
 	}
 
 	@Test
+	@Tag("JV1")
 	void eval_commandFailsButProducesStdout_redirectsStdoutAndThrows() throws IOException {
 		// Create a file to read successfully
 		Path validFile = tempDir.resolve("valid.txt");
