@@ -2,26 +2,28 @@ package repl;
 
 import repl.commands.Command;
 import repl.commands.BadCommand;
+import repl.commands.CommandResult;
 import repl.commands.ExecutableCommand;
 import repl.exceptions.ReplException;
 import repl.utils.ExecutableUtils;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Supplier;
 
 /**
- * Parses and evaluates user input to create the appropriate Command object.
+ * Evaluates user input to determine and execute the appropriate command.
  *
  * <p>Determines whether input is a builtin command, external executable, or invalid
- * command, then instantiates the corresponding Command implementation.
+ * command, then instantiates and executes the corresponding Command implementation.
  *
  * <p>Resolution order: builtin → executable in PATH → bad command
  *
+ * <p>Returns an {@link EvaluationResult} containing the command output and any
+ * redirection targets. The REPL is responsible for handling I/O redirection.
+ *
  * @see Command
  * @see BuiltinCommand
+ * @see EvaluationResult
  */
 public class ReplEvaluator {
 
@@ -44,16 +46,12 @@ public class ReplEvaluator {
 	 * Evaluates the input and executes the appropriate command.
 	 *
 	 * <p>Parses the input, determines command type, creates Command object,
-	 * and executes it.
+	 * executes it, and returns the result along with any redirection targets.
 	 *
-	 * @return the command execution result
-	 * @throws ReplException if command execution fails
+	 * @return the evaluation result containing command output and redirect targets
+	 * @throws ReplException if command execution fails unexpectedly
 	 */
-	public String eval() throws ReplException {
-		if(context.getMainCommandStr() == null) {
-			throw new RuntimeException("Null Input???");
-		}
-
+	public EvaluationResult eval() throws ReplException {
 		return processCommand();
 	}
 
@@ -61,58 +59,34 @@ public class ReplEvaluator {
 	 * Processes the parsed command and executes it.
 	 *
 	 * <p>Checks if command is builtin, then searches PATH for executable,
-	 * falling back to BadCommand if not found. Uses Supplier pattern to instantiate
-	 * builtin commands efficiently.
+	 * falling back to BadCommand if not found.
 	 *
-	 * @return the command execution result
-	 * @throws ReplException if command execution fails
+	 * @return the evaluation result with command output and redirect targets
+	 * @throws ReplException if command execution fails unexpectedly
 	 */
-	private String processCommand() throws ReplException {
+	private EvaluationResult processCommand() throws ReplException {
 		Supplier<Command> factory = BuiltinCommand.allCommandMap.get(context.getMainCommandStr());
 		Command command;
 		if(factory != null) {
 			command = factory.get();
 		} else {
 			Path executablePath = ExecutableUtils.findExecutablePath(context.getMainCommandStr());
-			if(executablePath != null)
+			if(executablePath != null) {
+				// Cache resolved path to avoid redundant PATH lookups in ExecutableCommand
+				context.setExecutablePath(executablePath);
 				command = new ExecutableCommand();
-			else
-				command = new BadCommand();
-		}
-
-		try {
-			String output = command.execute(context);
-
-			if(context.getStdoutRedirectTo() == null) {
-				return output;
 			} else {
-				redirectOutput(output, context.getStdoutRedirectTo());
-				return null;
+				command = new BadCommand();
 			}
-		} catch (ReplException e) {
-			// If command failed but produced stdout, redirect it before re-throwing
-			if (context.getStdoutRedirectTo() != null && e.getCapturedStdout() != null) {
-				redirectOutput(e.getCapturedStdout(), context.getStdoutRedirectTo());
-			}
-			throw e;
 		}
-	}
 
-	private void redirectOutput(String output, String redirectTo) throws ReplException {
-		try {
-			// Resolve relative paths against current working directory
-			Path outputPath = context.getDirUtils().getCurrentDir().resolve(redirectTo);
+		CommandResult result = command.execute(context);
 
-			// Ensure parent directories exist
-			Path parentDir = outputPath.getParent();
-			if (parentDir != null && !Files.exists(parentDir)) {
-				Files.createDirectories(parentDir);
-			}
-
-			Files.writeString(outputPath, output, StandardCharsets.UTF_8);
-		} catch (IOException e) {
-			throw new ReplException(e);
-		}
+		return new EvaluationResult(
+			result,
+			context.getStdoutRedirectTo(),
+			context.getStderrRedirectTo()
+		);
 	}
 
 }

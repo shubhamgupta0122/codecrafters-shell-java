@@ -23,8 +23,29 @@ public class DirUtils {
 	/** The tilde character used for home directory expansion. */
 	public static final String HomeDirTilde = "~";
 
-	/** The absolute path to the user's home directory. */
-	public static final String HomeDirPath = System.getenv("HOME");
+	/**
+	 * The absolute path to the user's home directory.
+	 * Falls back to user.home system property if HOME environment variable is not set (Windows).
+	 */
+	public static final String HomeDirPath = getHomeDirectory();
+
+	/**
+	 * Determines the user's home directory path.
+	 * Tries HOME environment variable first (Unix/Linux/Mac), then user.home property (Windows).
+	 *
+	 * @return the absolute path to the user's home directory
+	 * @throws IllegalStateException if home directory cannot be determined
+	 */
+	private static String getHomeDirectory() {
+		String home = System.getenv("HOME");
+		if (home == null || home.isEmpty()) {
+			home = System.getProperty("user.home");
+		}
+		if (home == null || home.isEmpty()) {
+			throw new IllegalStateException("Cannot determine home directory: both HOME env and user.home property are unset");
+		}
+		return home;
+	}
 
 	/** The directory where the shell was started. */
 	final Path initialDir;

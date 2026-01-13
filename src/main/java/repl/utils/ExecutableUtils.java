@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,6 +29,12 @@ import java.util.stream.Stream;
  */
 @UtilityClass
 public class ExecutableUtils {
+	/** Maximum number of entries in command cache before LRU eviction. */
+	private static final int MAX_COMMAND_CACHE_SIZE = 256;
+
+	/** Maximum number of entries in directory listing cache before LRU eviction. */
+	private static final int MAX_DIR_CACHE_SIZE = 64;
+
 	/**
 	 * Array of directory paths from the PATH environment variable.
 	 *
@@ -38,15 +45,29 @@ public class ExecutableUtils {
 
 	/**
 	 * Cache mapping command names to their resolved executable paths.
-	 * Thread-safe for concurrent access.
+	 * Thread-safe LRU cache with bounded size to prevent unbounded growth.
 	 */
-	private static final Map<String, Path> commandCache = new ConcurrentHashMap<>();
+	private static final Map<String, Path> commandCache = Collections.synchronizedMap(
+		new LinkedHashMap<>(16, 0.75f, true) {
+			@Override
+			protected boolean removeEldestEntry(Map.Entry<String, Path> eldest) {
+				return size() > MAX_COMMAND_CACHE_SIZE;
+			}
+		}
+	);
 
 	/**
 	 * Cache mapping PATH directory paths to sets of filenames they contain.
-	 * Thread-safe for concurrent access.
+	 * Thread-safe LRU cache with bounded size to prevent unbounded growth.
 	 */
-	private static final Map<String, Set<String>> dirListingCache = new ConcurrentHashMap<>();
+	private static final Map<String, Set<String>> dirListingCache = Collections.synchronizedMap(
+		new LinkedHashMap<>(16, 0.75f, true) {
+			@Override
+			protected boolean removeEldestEntry(Map.Entry<String, Set<String>> eldest) {
+				return size() > MAX_DIR_CACHE_SIZE;
+			}
+		}
+	);
 
 	/**
 	 * Initializes the PATH environment variable array.

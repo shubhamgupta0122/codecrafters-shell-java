@@ -60,7 +60,8 @@ Tests are tagged with JUnit 5 `@Tag` annotations corresponding to CodeCrafters c
 
 | Stage | Description | Test Class | Test Count |
 |-------|-------------|------------|------------|
-| `JV1` | Redirection - Redirect stdout | `ReplEvaluatorTest` | 7 |
+| `JV1` | Redirection - Redirect stdout | `ReplEvaluatorTest`, `REPLTest` | 18 |
+| `STDERR` | Redirection - Redirect stderr | `ReplEvaluatorTest`, `REPLTest` | 9 |
 
 ### Other Stages
 
@@ -73,7 +74,7 @@ Tests are tagged with JUnit 5 `@Tag` annotations corresponding to CodeCrafters c
 | Test File | Package | Description |
 |-----------|---------|-------------|
 | `CommandExtractorUtilsTest` | `repl.utils` | Command parsing, quoting, escaping, quoted executable names |
-| `DirUtilsTest` | `repl.utils` | Directory operations, path resolution |
+| `DirUtilsTest` | `repl.utils` | Directory operations, path resolution, Windows HOME fallback |
 | `EchoCommandTest` | `repl.commands.builtin` | Echo command behavior |
 | `ExitCommandTest` | `repl.commands.builtin` | Exit command behavior |
 | `TypeCommandTest` | `repl.commands.builtin` | Type command, builtin detection |
@@ -82,6 +83,7 @@ Tests are tagged with JUnit 5 `@Tag` annotations corresponding to CodeCrafters c
 | `ExecutableCommandTest` | `repl.commands` | External program execution |
 | `BadCommandTest` | `repl.commands` | Invalid command handling |
 | `ReplContextTest` | `repl` | Context builder and parsing |
-| `ReplEvaluatorTest` | `repl` | Command evaluation integration, stdout redirection |
+| `ReplEvaluatorTest` | `repl` | Command evaluation integration, stdout/stderr redirection, PATH caching |
+| `REPLTest` | `repl` | REPL I/O handling integration tests (file redirection) |
 | `ReplExceptionTest` | `repl.exceptions` | Exception handling |
 | `GracefulExitExceptionTest` | `repl.exceptions` | Exit exception behavior |

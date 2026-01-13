@@ -2,6 +2,7 @@ package repl.commands.builtin;
 
 import repl.ReplContext;
 import repl.commands.Command;
+import repl.commands.CommandResult;
 import repl.exceptions.GracefulExitException;
 
 /**
@@ -18,7 +19,7 @@ public class ExitCommand implements Command {
 	 * @return never returns normally
 	 * @throws GracefulExitException always thrown to signal exit
 	 */
-	public String execute(ReplContext context) throws GracefulExitException {
+	public CommandResult execute(ReplContext context) throws GracefulExitException {
 		throw new GracefulExitException();
 	}
 }

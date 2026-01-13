@@ -6,7 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import repl.ReplContext;
-import repl.exceptions.ReplException;
+import repl.commands.CommandResult;
 
 import java.util.List;
 
@@ -25,88 +25,93 @@ class TypeCommandTest {
 
 	@Test
 	@Tag("EZ5")
-	void execute_builtinEcho_returnsShellBuiltin() throws ReplException {
+	void execute_builtinEcho_returnsShellBuiltin() {
 		when(mockContext.getArgs()).thenReturn(List.of("echo"));
 
-		String result = typeCommand.execute(mockContext);
+		CommandResult result = typeCommand.execute(mockContext);
 
-		assertEquals("echo is a shell builtin", result);
+		assertEquals("echo is a shell builtin", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	@Test
 	@Tag("EZ5")
-	void execute_builtinExit_returnsShellBuiltin() throws ReplException {
+	void execute_builtinExit_returnsShellBuiltin() {
 		when(mockContext.getArgs()).thenReturn(List.of("exit"));
 
-		String result = typeCommand.execute(mockContext);
+		CommandResult result = typeCommand.execute(mockContext);
 
-		assertEquals("exit is a shell builtin", result);
+		assertEquals("exit is a shell builtin", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	@Test
 	@Tag("EZ5")
-	void execute_builtinType_returnsShellBuiltin() throws ReplException {
+	void execute_builtinType_returnsShellBuiltin() {
 		when(mockContext.getArgs()).thenReturn(List.of("type"));
 
-		String result = typeCommand.execute(mockContext);
+		CommandResult result = typeCommand.execute(mockContext);
 
-		assertEquals("type is a shell builtin", result);
+		assertEquals("type is a shell builtin", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	@Test
 	@Tag("EI0")
-	void execute_builtinPwd_returnsShellBuiltin() throws ReplException {
+	void execute_builtinPwd_returnsShellBuiltin() {
 		when(mockContext.getArgs()).thenReturn(List.of("pwd"));
 
-		String result = typeCommand.execute(mockContext);
+		CommandResult result = typeCommand.execute(mockContext);
 
-		assertEquals("pwd is a shell builtin", result);
+		assertEquals("pwd is a shell builtin", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	@Test
-	void execute_builtinCd_returnsShellBuiltin() throws ReplException {
+	void execute_builtinCd_returnsShellBuiltin() {
 		when(mockContext.getArgs()).thenReturn(List.of("cd"));
 
-		String result = typeCommand.execute(mockContext);
+		CommandResult result = typeCommand.execute(mockContext);
 
-		assertEquals("cd is a shell builtin", result);
+		assertEquals("cd is a shell builtin", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	@Test
 	@Tag("EZ5")
-	void execute_unknownCommand_returnsNotFound() throws ReplException {
+	void execute_unknownCommand_returnsNotFound() {
 		when(mockContext.getArgs()).thenReturn(List.of("unknowncmd123"));
 
-		String result = typeCommand.execute(mockContext);
+		CommandResult result = typeCommand.execute(mockContext);
 
-		assertEquals("unknowncmd123: not found", result);
+		assertEquals("unknowncmd123: not found", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	// === Stage #MG5: Locate executable files ===
 
 	@Test
 	@Tag("MG5")
-	void execute_existingExecutable_returnsPath() throws ReplException {
+	void execute_existingExecutable_returnsPath() {
 		// 'ls' should exist on most Unix systems
 		when(mockContext.getArgs()).thenReturn(List.of("ls"));
 
-		String result = typeCommand.execute(mockContext);
+		CommandResult result = typeCommand.execute(mockContext);
 
-		assertTrue(result.startsWith("ls is "));
-		assertTrue(result.contains("/ls"));
+		assertTrue(result.stdout().startsWith("ls is "));
+		assertTrue(result.stdout().contains("/ls"));
+		assertTrue(result.isSuccess());
 	}
 
 	// === Input validation ===
 
 	@Test
-	void execute_noArgs_throwsReplExceptionWithMissingOperand() {
+	void execute_noArgs_returnsErrorWithMissingOperand() {
 		when(mockContext.getArgs()).thenReturn(List.of());
 
-		ReplException exception = assertThrows(
-			ReplException.class,
-			() -> typeCommand.execute(mockContext)
-		);
+		CommandResult result = typeCommand.execute(mockContext);
 
-		assertEquals("type: missing operand", exception.getMessage());
+		assertEquals("type: missing operand", result.stderr());
+		assertFalse(result.isSuccess());
 	}
 }

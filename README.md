@@ -21,6 +21,10 @@ This project is a Java implementation of a basic POSIX-compliant shell, develope
     *   Automatically creates parent directories if they don't exist.
     *   Overwrites existing files.
     *   Examples: `echo hello > output.txt`, `pwd 1> dir.txt`, `ls > logs/output.txt`
+*   **Stderr Redirection:** Redirect command errors to files using `2>` operator.
+    *   Works with both successful and failing commands.
+    *   Creates parent directories automatically.
+    *   Examples: `cat nonexistent 2> errors.txt`, `ls invalid 2> logs/errors.txt`
 *   **Cross-Platform Support:** Compatible with Unix, Linux, macOS, and Windows.
 
 ## Project Structure

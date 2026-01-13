@@ -7,7 +7,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import repl.ReplContext;
-import repl.exceptions.ReplException;
+import repl.commands.CommandResult;
 import repl.utils.DirUtils;
 
 import java.io.IOException;
@@ -34,25 +34,27 @@ class PwdCommandTest {
 
 	@Test
 	@Tag("EI0")
-	void execute_returnsCurrentDirectoryPath() throws ReplException, IOException {
+	void execute_returnsCurrentDirectoryPath() throws IOException {
 		Path realPath = tempDir.toRealPath();
 		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
 		when(mockDirUtils.getCurrentDir()).thenReturn(realPath);
 
-		String result = pwdCommand.execute(mockContext);
+		CommandResult result = pwdCommand.execute(mockContext);
 
-		assertEquals(realPath.toAbsolutePath().toString(), result);
+		assertEquals(realPath.toAbsolutePath().toString(), result.stdout());
+		assertTrue(result.isSuccess());
 	}
 
 	@Test
 	@Tag("EI0")
-	void execute_withDifferentDirectory_returnsCorrectPath() throws ReplException {
+	void execute_withDifferentDirectory_returnsCorrectPath() {
 		Path customPath = Path.of("/usr/local");
 		when(mockContext.getDirUtils()).thenReturn(mockDirUtils);
 		when(mockDirUtils.getCurrentDir()).thenReturn(customPath);
 
-		String result = pwdCommand.execute(mockContext);
+		CommandResult result = pwdCommand.execute(mockContext);
 
-		assertEquals("/usr/local", result);
+		assertEquals("/usr/local", result.stdout());
+		assertTrue(result.isSuccess());
 	}
 }

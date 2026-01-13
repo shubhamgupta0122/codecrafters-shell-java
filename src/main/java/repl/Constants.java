@@ -60,4 +60,5 @@ public class Constants {
 	);
 
 	public static final Set<String> STDOUT_REDIRECT = Set.of("1>", ">");
+	public static final Set<String> STDERR_REDIRECT = Set.of("2>");
 }

@@ -1,8 +1,10 @@
 package repl.commands.builtin;
 
 import repl.BuiltinCommand;
+import repl.Messages;
 import repl.ReplContext;
 import repl.commands.Command;
+import repl.commands.CommandResult;
 import repl.exceptions.ReplException;
 import repl.utils.DirUtils;
 
@@ -17,8 +19,6 @@ import java.util.List;
  * and home directory expansion using {@code ~}.
  */
 public class ChangeDirCommand implements Command {
-	/** Error message suffix for non-existent paths. */
-	private static final String NoSuchFileOrDirectory = ": No such file or directory";
 
 	/**
 	 * Changes the current working directory.
@@ -27,19 +27,18 @@ public class ChangeDirCommand implements Command {
 	 * tilde expansion for home directory paths.
 	 *
 	 * @param context the REPL context containing target path and DirUtils
-	 * @return null on success
-	 * @throws ReplException if the path doesn't exist (NoSuchFileException) or
-	 *                        if an I/O error occurs
+	 * @return command result (empty on success, error on failure)
+	 * @throws ReplException if an unexpected I/O error occurs
 	 */
 	@Override
-	public String execute(ReplContext context) throws ReplException {
+	public CommandResult execute(ReplContext context) throws ReplException {
 		List<String> args = context.getArgs();
 		String requestedPath = args.isEmpty() ? DirUtils.HomeDirTilde : args.getFirst();
 		try {
 			context.getDirUtils().setCurrentDir(requestedPath);
-			return null;
+			return CommandResult.empty();
 		} catch (NoSuchFileException e) {
-			throw new ReplException(BuiltinCommand.cd + ": " + e.getMessage() + NoSuchFileOrDirectory, e);
+			return CommandResult.error(BuiltinCommand.cd + ": " + e.getMessage() + Messages.NO_SUCH_FILE_OR_DIRECTORY);
 		} catch (IOException e) {
 			throw new ReplException(e);
 		}

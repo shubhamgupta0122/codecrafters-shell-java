@@ -21,10 +21,13 @@ src/main/java/
     ├── REPL.java                      # Main REPL loop orchestrator
     ├── ReplContext.java               # Context/dependency injection
     ├── ReplEvaluator.java             # Command resolution & evaluation
+    ├── EvaluationResult.java          # Wrapper for command result + redirect targets
     ├── BuiltinCommand.java            # Builtin command registry
     ├── Constants.java                 # Shared constants
+    ├── Messages.java                  # Centralized error messages
     ├── commands/
     │   ├── Command.java               # Core interface
+    │   ├── CommandResult.java         # Command output (stdout, stderr, exit code)
     │   ├── ExecutableCommand.java     # External process handler
     │   ├── BadCommand.java            # Error handler for unknown commands
     │   └── builtin/
@@ -38,7 +41,7 @@ src/main/java/
     │   └── GracefulExitException.java # Control flow for exit
     └── utils/
         ├── CommandExtractorUtils.java # Parsing with quote/escape handling
-        ├── ExecutableUtils.java       # PATH searching
+        ├── ExecutableUtils.java       # PATH searching with LRU caching
         └── DirUtils.java              # Directory management
 ```
 
@@ -64,8 +67,10 @@ Implements the classic Read-Eval-Print Loop pattern using **tail recursion** ins
 ```
 REPL.loop() [tail recursion]
 ├── 1. read()      → Displays "$" prompt, reads user input
-├── 2. eval()      → Creates ReplEvaluator, evaluates command
-├── 3. print()     → Prints output to stdout (if not null)
+├── 2. eval()      → Creates ReplEvaluator, evaluates command → EvaluationResult
+├── 3. handleIO()  → Handles output and redirection based on EvaluationResult
+│   ├── Stdout:   redirect to file OR print to terminal
+│   └── Stderr:   redirect to file OR print to terminal
 └── 4. loop()      → Recursive call
                      Catches: GracefulExitException (exit normally)
                      Catches: ReplException (print error to stderr, continue loop)
@@ -73,6 +78,8 @@ REPL.loop() [tail recursion]
 ```
 
 **Design Choice:** Uses tail recursion with `@SuppressWarnings("InfiniteRecursion")` instead of a traditional while loop.
+
+**I/O Handling:** REPL is responsible for all file I/O redirection via `handleIO(EvaluationResult)` method. Creates parent directories if needed, overwrites existing files.
 
 ---
 
@@ -88,6 +95,8 @@ Two-tier context design using the **Builder pattern**:
 - `mainCommandStr` - Parsed command name
 - `args` - List of parsed arguments
 - `stdoutRedirectTo` - Target file for stdout redirection (null if no redirection)
+- `stderrRedirectTo` - Target file for stderr redirection (null if no redirection)
+- `executablePath` - Cached resolved executable path for performance (null if not cached)
 
 **Builder Pattern Implementation:**
 ```java
@@ -109,26 +118,22 @@ Resolves and executes commands with the following priority order:
 **Resolution Order: builtin → executable in PATH → bad command**
 
 ```java
-processCommand():
+processCommand() → EvaluationResult:
 ├── 1. Check BuiltinCommand.allCommandMap
 │   └── Found? Instantiate via Supplier factory
 ├── 2. Search PATH using ExecutableUtils.findExecutablePath()
-│   └── Found? Create ExecutableCommand instance
+│   ├── Found? Cache path in context.setExecutablePath()
+│   └── Create ExecutableCommand instance
 ├── 3. Neither? Create BadCommand instance
-├── 4. Execute command → get output
-└── 5. Handle stdout redirection (if stdoutRedirectTo != null)
-    ├── Resolve path against current directory
-    ├── Create parent directories if needed
-    ├── Write output to file (overwrites existing)
-    └── Return null (suppresses console output)
+├── 4. Execute command → get CommandResult (stdout, stderr, exit code)
+└── 5. Return EvaluationResult(commandResult, stdoutRedirectTo, stderrRedirectTo)
 ```
 
-**Stdout Redirection Features:**
-- Supports both `>` and `1>` operators
-- Creates parent directories automatically
-- Overwrites existing files
-- Works with both builtin and external commands
-- Returns null when redirecting (no console output)
+**Key Features:**
+- Returns `EvaluationResult` containing command output + redirect targets
+- Caches resolved executable paths in context for performance
+- Does NOT handle file I/O (delegated to REPL.handleIO())
+- Commands return `CommandResult` with stdout, stderr, and exit code
 
 ---
 
@@ -150,6 +155,43 @@ Commands are instantiated via method reference factories (Supplier pattern) for 
 
 ---
 
+### 6. Result Types
+
+**EvaluationResult** - Wrapper separating command output from I/O instructions
+```java
+record EvaluationResult(
+    CommandResult commandResult,
+    String stdoutRedirectTo,
+    String stderrRedirectTo
+)
+```
+- Returned by `ReplEvaluator.eval()`
+- Tells REPL what the command produced AND where to send output
+- Clean separation of evaluation logic from I/O handling
+
+**CommandResult** - Command output with exit code
+```java
+record CommandResult(String stdout, String stderr, int exitCode)
+```
+- Returned by `Command.execute()`
+- Explicit modeling of both output streams
+- Exit code indicates success/failure (0 = success)
+- Factory methods: `success()`, `empty()`, `error()`
+
+**Messages** - Centralized error message constants
+```java
+public final class Messages {
+    public static final String TYPE_IS_SHELL_BUILTIN = " is a shell builtin";
+    public static final String COMMAND_NOT_FOUND = "command not found";
+    // ... other constants
+}
+```
+- Eliminates magic strings scattered across codebase
+- Single source of truth for error messages
+- Easier to maintain and update messages
+
+---
+
 ## Design Patterns
 
 ### Command Pattern
@@ -157,19 +199,26 @@ Commands are instantiated via method reference factories (Supplier pattern) for 
 All commands implement a uniform interface:
 ```java
 interface Command {
-    String execute(ReplContext context) throws ReplException;
+    CommandResult execute(ReplContext context) throws ReplException;
+}
+
+record CommandResult(String stdout, String stderr, int exitCode) {
+    static CommandResult success(String stdout) { ... }
+    static CommandResult empty() { ... }
+    static CommandResult error(String stderr) { ... }
 }
 ```
 
 **Implementations:**
 - **Builtin commands**: `EchoCommand`, `ExitCommand`, `TypeCommand`, `PwdCommand`, `ChangeDirCommand`
 - **External commands**: `ExecutableCommand` (spawns external processes)
-- **Error handler**: `BadCommand` (returns "command not found")
+- **Error handler**: `BadCommand` (throws ReplException for unknown commands)
 
 **Benefits:**
 - Uniform interface makes it easy to add new commands
 - Each command is self-contained and independently testable
-- Clear separation of command logic from parsing/evaluation
+- Clear separation of command logic from parsing/evaluation/I/O
+- Explicit modeling of stdout, stderr, and exit codes
 
 ---
 
@@ -196,40 +245,42 @@ Context-based injection pattern:
 ### Builtin Commands
 
 **EchoCommand** - Prints arguments
-- Returns: `String.join(" ", args)`
+- Returns: `CommandResult.success(String.join(" ", args))`
 
 **ExitCommand** - Terminates shell
 - Throws: `GracefulExitException` (control flow exception)
 - Caught by REPL loop to exit gracefully
 
 **PwdCommand** - Prints working directory
-- Returns: Absolute path string from `DirUtils.getCurrentDir()`
+- Returns: `CommandResult.success(DirUtils.getCurrentDir().toAbsolutePath().toString())`
 
 **ChangeDirCommand** - Changes working directory
 - Supports: Absolute paths, relative paths, home expansion (`~`)
 - Error handling: Catches `NoSuchFileException` → throws `ReplException` with error message
 - Throws: `ReplException` if path doesn't exist or I/O error occurs
-- Returns: `null` on success (REPL skips printing)
+- Returns: `CommandResult.empty()` on success
 
 **TypeCommand** - Identifies command type
 - Checks builtin registry then searches PATH
 - Throws: `ReplException` if no command argument provided
-- Returns: "is a shell builtin" or full path or "not found"
+- Returns: `CommandResult.success("is a shell builtin" | full path | "not found")`
 
 ### External Commands
 
 **ExecutableCommand** - Spawns external processes
 - Uses `ProcessBuilder` to execute system commands
-- Captures stdout and stderr separately
+- Uses cached executable path from context if available (performance optimization)
+- Captures stdout and stderr separately with explicit UTF-8 encoding
+- Null checks for process streams (defensive programming)
 - Checks process exit code after completion
-- Returns: stdout (stripped of trailing whitespace) on success (exit code 0)
-- Throws: `ReplException` with stderr content if exit code is non-zero
+- Returns: `CommandResult(stdout, stderr, exitCode)` with trailing whitespace stripped
+- Throws: `ReplException` with captured output if exit code is non-zero
 - Throws: `ReplException` wrapping IOException/InterruptedException on execution failure
 
 ### Error Handler
 
 **BadCommand** - Unknown command handler
-- Throws: `ReplException` with message `"<command>: command not found"`
+- Throws: `ReplException` with message from `Messages.COMMAND_NOT_FOUND` constant
 
 ---
 
@@ -279,24 +330,33 @@ echo "say \"hi\""         → args: ["say "hi""]         # backslash escapes quo
 'prog'gram arg            → command: "proggram", args: ["arg"]  # concatenation
 ```
 
-**Stdout Redirection Parsing:**
+**Stream Redirection Parsing:**
 
-After tokenization, the parser identifies stdout redirection operators (`>` or `1>`) in the token list:
+After tokenization, the parser identifies redirection operators in the token list:
+- **Stdout redirection**: `>` or `1>` operators
+- **Stderr redirection**: `2>` operator
 - Finds the redirect operator position (must be followed by exactly one token - the target filename)
-- Splits tokens into:command (first token)
+- Splits tokens into:
+  - Command (first token)
   - Arguments (tokens between command and redirect operator)
   - Redirect target (token after redirect operator)
 
 Examples:
 ```bash
-echo hello > output.txt       → command: "echo", args: ["hello"], redirect: "output.txt"
-pwd 1> /tmp/dir.txt           → command: "pwd", args: [], redirect: "/tmp/dir.txt"
-echo "test" > dir/file.txt    → command: "echo", args: ["test"], redirect: "dir/file.txt"
+# Stdout redirection
+echo hello > output.txt       → command: "echo", args: ["hello"], stdout redirect: "output.txt"
+pwd 1> /tmp/dir.txt           → command: "pwd", args: [], stdout redirect: "/tmp/dir.txt"
+echo "test" > dir/file.txt    → command: "echo", args: ["test"], stdout redirect: "dir/file.txt"
+
+# Stderr redirection
+cat nonexistent 2> errors.txt → command: "cat", args: ["nonexistent"], stderr redirect: "errors.txt"
+ls invalid 2> logs/err.txt    → command: "ls", args: ["invalid"], stderr redirect: "logs/err.txt"
 ```
 
 Error handling:
 - Multiple tokens after redirect operator → throws `IllegalArgumentException`
 - Redirect operator without target → throws `IllegalArgumentException`
+- Both stdout and stderr redirects in same command → throws `IllegalArgumentException` (currently not supported)
 
 ---
 
@@ -305,31 +365,34 @@ Error handling:
 **State:**
 - `initialDir` - Starting directory (from `System.getProperty("user.dir")`)
 - `currentDir` - Current working directory (mutable)
+- `HomeDirPath` - Static constant for home directory with Windows fallback
 
 **Features:**
-- Home directory expansion: `~` → `$HOME`
+- Home directory expansion: `~` → `$HOME` (with fallback to `user.home` property on Windows)
 - Relative path resolution: Resolves against `currentDir`
 - Symlink resolution: Uses `.toRealPath()`
 - Instance-based (allows test isolation)
+- Cross-platform HOME detection: Tries `System.getenv("HOME")` first, then `System.getProperty("user.home")`
 
 ---
 
 ### Executable Discovery (ExecutableUtils.java)
 
-**PATH Searching with Two-Level Caching:**
+**PATH Searching with Bounded LRU Caching:**
 - Splits `System.getenv("PATH")` using platform-specific separator (`File.pathSeparator`)
 - Handles missing or empty PATH gracefully (returns empty array)
-- Implements two-level caching for optimal performance:
-  - **Command cache**: Maps command names → resolved paths (O(1) lookup)
-  - **Directory listing cache**: Caches scanned directories to avoid repeated filesystem I/O
+- Implements two-level LRU caching with bounds for optimal performance:
+  - **Command cache**: Maps command names → resolved paths (max 256 entries, LRU eviction)
+  - **Directory listing cache**: Caches scanned directories (max 64 entries, LRU eviction)
 - For each directory: Checks cached listings first, scans only on cache miss
 - Verification: `Files.isExecutable()` check
 - Returns: First match or null
-- Thread-safe using `ConcurrentHashMap` for concurrent access
+- Thread-safe using synchronized LinkedHashMap with LRU eviction
 
 **Performance:**
 - First lookup: Scans directories once, caches results
 - Subsequent lookups: O(1) hash map lookup (no filesystem access)
+- Bounded cache prevents unbounded memory growth
 - Significant improvement for repeated command executions
 
 **Platform Compatibility:**

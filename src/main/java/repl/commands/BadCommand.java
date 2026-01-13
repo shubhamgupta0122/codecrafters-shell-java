@@ -1,5 +1,6 @@
 package repl.commands;
 
+import repl.Messages;
 import repl.ReplContext;
 import repl.exceptions.ReplException;
 
@@ -10,18 +11,14 @@ import repl.exceptions.ReplException;
  * an executable found in PATH. Returns a "command not found" error message.
  */
 public class BadCommand implements Command {
-	/** Error message for commands that don't exist. */
-	public static final String COMMAND_NOT_FOUND = "command not found";
-
 	/**
-	 * Executes the bad command handler by throwing an exception.
+	 * Executes the bad command handler by returning an error result.
 	 *
 	 * @param context the REPL context
-	 * @return never returns (always throws exception)
-	 * @throws ReplException always thrown with "command not found" message
+	 * @return command result with "command not found" error in stderr
 	 */
 	@Override
-	public String execute(ReplContext context) throws ReplException {
-		throw new ReplException(context.getMainCommandStr() + ": " + COMMAND_NOT_FOUND);
+	public CommandResult execute(ReplContext context) {
+		return CommandResult.error(context.getMainCommandStr() + ": " + Messages.COMMAND_NOT_FOUND);
 	}
 }
