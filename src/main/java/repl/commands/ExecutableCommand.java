@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Command handler for external executable programs.
@@ -49,19 +50,30 @@ public class ExecutableCommand implements Command {
 			// Start process and capture output
 			Process process = pb.start();
 
-			// Get streams with null checking
-			InputStream stdoutStream = process.getInputStream();
-			InputStream stderrStream = process.getErrorStream();
-			if (stdoutStream == null || stderrStream == null) {
-				throw new ReplException("Process streams unavailable for command: " + mainCommandStr);
-			}
+			// Read streams concurrently to avoid deadlock on large output
+			// Sequential reading can block if output exceeds pipe buffer size (~64KB)
+			CompletableFuture<String> stdoutFuture = CompletableFuture.supplyAsync(() -> {
+				try (InputStream stream = process.getInputStream()) {
+					return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+				} catch (IOException e) {
+					return "";
+				}
+			});
 
-			// Read output with explicit UTF-8 encoding
-			String stdout = new String(stdoutStream.readAllBytes(), StandardCharsets.UTF_8);
-			String stderr = new String(stderrStream.readAllBytes(), StandardCharsets.UTF_8);
+			CompletableFuture<String> stderrFuture = CompletableFuture.supplyAsync(() -> {
+				try (InputStream stream = process.getErrorStream()) {
+					return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+				} catch (IOException e) {
+					return "";
+				}
+			});
 
-			// Wait for completion
+			// Wait for process completion
 			int exitCode = process.waitFor();
+
+			// Retrieve captured output (blocks until streams are fully read)
+			String stdout = stdoutFuture.join();
+			String stderr = stderrFuture.join();
 
 			// Strip trailing whitespace (REPL adds newlines)
 			String cleanStdout = stdout.stripTrailing();

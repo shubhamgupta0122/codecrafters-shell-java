@@ -14,7 +14,7 @@ public class ReplException extends Exception {
 	 * @param cause the underlying exception that caused this error
 	 */
 	public ReplException(Throwable cause) {
-		super(cause.getMessage(), cause);
+		super(cause != null ? cause.getMessage() : null, cause);
 	}
 
 	/**
