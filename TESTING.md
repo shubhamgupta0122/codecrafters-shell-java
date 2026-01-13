@@ -54,14 +54,14 @@ Tests are tagged with JUnit 5 `@Tag` annotations corresponding to CodeCrafters c
 | Stage | Description | Test Class | Test Count |
 |-------|-------------|------------|------------|
 | `MG5` | Locate executable files | `TypeCommandTest` | 1 |
-| `IP1` | Run a program | `ExecutableCommandTest` | 3 |
+| `IP1` | Run a program | `ExecutableCommandTest` | 4 |
 
 ### Redirection Stages
 
 | Stage | Description | Test Class | Test Count |
 |-------|-------------|------------|------------|
 | `JV1` | Redirection - Redirect stdout | `ReplEvaluatorTest`, `REPLTest` | 18 |
-| `STDERR` | Redirection - Redirect stderr | `ReplEvaluatorTest`, `REPLTest` | 9 |
+| `VZ4` | Redirection - Redirect stderr | `ReplEvaluatorTest`, `REPLTest` | 9 |
 
 ### Other Stages
 

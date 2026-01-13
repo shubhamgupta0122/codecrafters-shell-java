@@ -34,14 +34,9 @@ public class ExecutableCommand implements Command {
 			// Build command list
 			List<String> command = new ArrayList<>();
 
-			// Use cached executable path if available (avoids redundant PATH lookup)
-			if (context.getExecutablePath() != null) {
-				command.add(context.getExecutablePath().toString());
-			} else {
-				// Fallback to command name (ProcessBuilder will search PATH)
-				command.add(mainCommandStr);
-			}
-
+			// Always use command name (not full path) to ensure argv[0] is correct
+			// ProcessBuilder will resolve via PATH (fast due to OS caching)
+			command.add(mainCommandStr);
 			command.addAll(context.getArgs());
 
 			// Create and configure process

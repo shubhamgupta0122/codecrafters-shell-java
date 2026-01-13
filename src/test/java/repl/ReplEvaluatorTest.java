@@ -239,7 +239,7 @@ class ReplEvaluatorTest {
 	// === Stderr redirection tests ===
 
 	@Test
-	@Tag("STDERR")
+	@Tag("VZ4")
 	void eval_stderrRedirect_failingCommand_returnsStderrAndRedirectTarget() throws ReplException {
 		ReplEvaluator evaluator = new ReplEvaluator("cat nonexistent_file 2> errors.txt", contextBuilder);
 
@@ -255,7 +255,7 @@ class ReplEvaluatorTest {
 	}
 
 	@Test
-	@Tag("STDERR")
+	@Tag("VZ4")
 	void eval_stderrRedirect_successfulCommand_returnsStdoutAndEmptyStderr() throws ReplException {
 		ReplEvaluator evaluator = new ReplEvaluator("echo hello 2> errors.txt", contextBuilder);
 
@@ -270,7 +270,7 @@ class ReplEvaluatorTest {
 	}
 
 	@Test
-	@Tag("STDERR")
+	@Tag("VZ4")
 	void eval_stderrRedirect_partialFailure_returnsStdoutStderrAndRedirectTarget() throws IOException, ReplException {
 		// Create a valid file
 		Path validFile = tempDir.resolve("valid.txt");
@@ -292,7 +292,7 @@ class ReplEvaluatorTest {
 	}
 
 	@Test
-	@Tag("STDERR")
+	@Tag("VZ4")
 	void eval_stderrRedirect_nestedDirectory_returnsResultWithNestedPath() throws ReplException {
 		ReplEvaluator evaluator = new ReplEvaluator("cat nonexistent 2> subdir/nested/errors.txt", contextBuilder);
 

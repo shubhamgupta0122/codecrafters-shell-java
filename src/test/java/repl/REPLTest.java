@@ -118,7 +118,7 @@ class REPLTest {
 	// === Stderr redirection tests ===
 
 	@Test
-	@Tag("STDERR")
+	@Tag("VZ4")
 	void handleIO_stderrRedirect_writesErrorToFile() throws ReplException, IOException {
 		CommandResult cmdResult = new CommandResult("", "cat: nonexistent: No such file or directory", 1);
 		EvaluationResult result = new EvaluationResult(cmdResult, null, "errors.txt");
@@ -133,7 +133,7 @@ class REPLTest {
 	}
 
 	@Test
-	@Tag("STDERR")
+	@Tag("VZ4")
 	void handleIO_stderrRedirect_successfulCommand_createsEmptyFile() throws ReplException, IOException {
 		// Successful command with no stderr
 		CommandResult cmdResult = CommandResult.success("hello");
@@ -149,7 +149,7 @@ class REPLTest {
 	}
 
 	@Test
-	@Tag("STDERR")
+	@Tag("VZ4")
 	void handleIO_stderrRedirect_nestedDirectory_createsParentDirs() throws ReplException, IOException {
 		CommandResult cmdResult = new CommandResult("", "error message", 1);
 		EvaluationResult result = new EvaluationResult(cmdResult, null, "subdir/nested/errors.txt");
@@ -165,7 +165,7 @@ class REPLTest {
 	}
 
 	@Test
-	@Tag("STDERR")
+	@Tag("VZ4")
 	void handleIO_stderrRedirect_partialFailure_bothStdoutAndStderr() throws ReplException, IOException {
 		// Command that outputs to both stdout and stderr
 		CommandResult cmdResult = new CommandResult("valid output", "error: file not found", 1);
@@ -198,8 +198,8 @@ class REPLTest {
 	}
 
 	@Test
+	@Tag("VZ4")
 	@Tag("JV1")
-	@Tag("STDERR")
 	void handleIO_bothRedirects_writesToBothFiles() throws ReplException, IOException {
 		// This would require supporting both redirects simultaneously
 		// For now, parser rejects this, but test documents expected behavior

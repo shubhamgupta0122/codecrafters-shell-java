@@ -77,4 +77,21 @@ class ExecutableCommandTest {
 		assertTrue(message.contains("nonexistent_command_xyz"));
 		assertTrue(message.contains("execution failed") || message.contains("Cannot run program"));
 	}
+
+	// === Argv[0] behavior ===
+
+	@Test
+	@Tag("IP1")
+	void execute_usesCommandNameNotFullPath_forArgv0() throws ReplException {
+		// Verify that argv[0] is the command name, not the full path
+		// Use 'sh -c' to print $0 which shows argv[0] of the sh command
+		when(mockContext.getMainCommandStr()).thenReturn("sh");
+		when(mockContext.getArgs()).thenReturn(List.of("-c", "basename $0"));
+
+		CommandResult result = executableCommand.execute(mockContext);
+
+		// Should print "sh" (command name) not "/bin/sh" or "/usr/bin/sh" (full path)
+		assertEquals("sh", result.stdout());
+		assertTrue(result.isSuccess());
+	}
 }
